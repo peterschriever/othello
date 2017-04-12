@@ -2,12 +2,16 @@ package Game;
 
 import Framework.AI.BotInterface;
 import Framework.Config;
+import Framework.Dialogs.ConnectionDialog;
 import Framework.Dialogs.DialogEvents;
+import Framework.Dialogs.DialogInterface;
 import Framework.Game.GameLogicInterface;
 import Framework.GameStart;
 import Framework.Networking.Connection;
 import Framework.Networking.ConnectionInterface;
 import Framework.Networking.NetworkEvents;
+import Framework.Networking.Response.ChallengeReceivedResponse;
+import Framework.Networking.Response.Response;
 import Framework.Networking.SimulatedConnection;
 import Game.Controllers.BaseController;
 import Game.Controllers.DialogEventsController;
@@ -45,9 +49,18 @@ public class StartGame extends Application implements GameStart {
         this.scene = scene;
 
         // setup and save the connection
-        String host = Config.get("network", "host");
-        int port = Integer.parseInt(Config.get("network", "port"));
-//        conn = new Connection(host, port, new NetworkEventController);
+        String host;
+        int port;
+        try {
+            host = Config.get("network", "host");
+            port = Integer.parseInt(Config.get("network", "port"));
+        } catch (Exception e) {
+            DialogInterface networkDialog = new ConnectionDialog(getDialogEventsController());
+            networkDialog.display(); // @TODO: implement ConnectionDialog callback
+            host = "localhost";
+            port = 7789;
+        }
+        conn = new Connection(host, port, networkEventHandler);
 
         if (!stage.isShowing()) {
             stage.show();
@@ -84,6 +97,10 @@ public class StartGame extends Application implements GameStart {
     @Override
     public void start() {
         // when started from either the framework or standalone
+
+        // @DEBUG: challengeAcceptedResponse
+        Response challengeResponse = new ChallengeReceivedResponse("bla", "Tic-tac-toe", 12);
+        challengeResponse.executeCallback();
 
     }
 
