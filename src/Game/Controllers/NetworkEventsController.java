@@ -6,7 +6,6 @@ import Framework.Networking.Response.*;
 import Game.StartGame;
 import javafx.application.Platform;
 import Game.Models.Othello;
-import Game.StartGame;
 
 /**
  * Created by peterzen on 2017-04-12.
@@ -55,7 +54,6 @@ public class NetworkEventsController implements NetworkEvents {
         StartGame.getBaseController().getControlsController().disableControls();
 
         StartGame.getBaseController().getBoardController().othello = new Othello();
-
     }
 
     @Override
