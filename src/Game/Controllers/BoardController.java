@@ -131,8 +131,8 @@ public class BoardController extends Board {
         // i = row, j = column
         for (i = 0; i < BOARDSIZE; i++) {
             for (j = 0; j < BOARDSIZE; j++) {
+//                System.out.println("I: " + i + " J: " + j);
                 Image image = new Image(BoardController.class.getClassLoader().getResourceAsStream("Empty.png"));
-                System.out.println("I: " + i + " J: " + j);
                 Image blackImage = new Image(BoardController.class.getClassLoader().getResourceAsStream("Black.png"));
                 Image whiteImage = new Image(BoardController.class.getClassLoader().getResourceAsStream("White.png"));
                 ImageView imageView = new ImageView();
