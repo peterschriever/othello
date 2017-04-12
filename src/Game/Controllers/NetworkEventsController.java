@@ -1,9 +1,10 @@
 package Game.Controllers;
 
-import Framework.Dialogs.DialogInterface;
-import Framework.Dialogs.ErrorDialog;
+import Framework.Dialogs.*;
 import Framework.Networking.NetworkEvents;
 import Framework.Networking.Response.*;
+import Game.StartGame;
+import javafx.application.Platform;
 
 /**
  * Created by peterzen on 2017-04-12.
@@ -11,47 +12,76 @@ import Framework.Networking.Response.*;
  */
 public class NetworkEventsController implements NetworkEvents {
     @Override
-    public void challengeCancelled(ChallengeCancelledResponse challengeCancelledResponse) {
+    public void challengeCancelled(ChallengeCancelledResponse response) {
         System.out.println("challenge cancelled!");
     }
 
     @Override
-    public void challengeReceived(ChallengeReceivedResponse challengeReceivedResponse) {
-        System.out.println("challenge received!");
+    public void challengeReceived(ChallengeReceivedResponse response) {
+        AbstractDialog challengeDialog = new ChallengeReceivedDialog(StartGame.getDialogEventsController(), response.getChallenger(), response.getChallengeNumber());
+        Platform.runLater(challengeDialog::display);
     }
 
     @Override
-    public void gameEnded(GameEndResponse gameEndResponse) {
-        System.out.println("gameEnded response!");
+    public void gameEnded(GameEndResponse response) {
+        // show GameEndedDialog
+        String result = response.getResult();
+        DialogInterface gameEndedDialog = new MessageDialog(
+                "Game has ended!",
+                "Game resulted in a " + result + "!",
+                "Comment: " + response.getComment() + "\n"
+                        + "Player one score: " + response.getPlayerOneScore() + "\n"
+                        + "Player two score: " + response.getPlayerTwoScore()
+        );
+        Platform.runLater(gameEndedDialog::display);
+
+        StartGame.getBaseController().getBoardController().loadPreGameBoardStyle();
+        StartGame.getBaseController().getControlsController().enableControls();
     }
 
     @Override
-    public void gameListReceived(GameListResponse gameListResponse) {
+    public void gameListReceived(GameListResponse response) {
         System.out.println("gameList response!");
     }
 
     @Override
-    public void matchReceived(MatchReceivedResponse matchReceivedResponse) {
+    public void matchReceived(MatchReceivedResponse response) {
 
     }
 
     @Override
-    public void moveReceived(MoveResponse moveResponse) {
-        System.out.println("moveReceived response!");
+    public void moveReceived(MoveResponse response) {
+        String player = response.getMovingPlayer();
+        if (player.equals(StartGame.getBaseController().getLoggedInPlayer())) {
+            return; // ignore moves we have made ourselves.
+        }
+        if (response.getMoveDetails() != null && response.getMoveDetails().equals("Illegal move")) {
+            return; // ignore an illegal move, to prevent getting exceptions on our position conversion
+        }
+
+        int position = response.getMovePosition();
+        BoardController boardController = StartGame.getBaseController().getBoardController();
+        int[] coordinates = boardController.getListOfCoordinates().get(position);
+
+        int x = coordinates[0];
+        int y = coordinates[1];
+
+        // update view via BoardController
+        boardController.setMove(x, y, player);
     }
 
     @Override
-    public void ourTurn(OurTurnResponse ourTurnResponse) {
+    public void ourTurn(OurTurnResponse response) {
         System.out.println("ourTurn response!");
     }
 
     @Override
-    public void playerListReceived(PlayerListResponse playerListResponse) {
+    public void playerListReceived(PlayerListResponse response) {
         System.out.println("playerList response!");
     }
 
     @Override
-    public void errorReceived(ErrorResponse errorResponse) {
-        DialogInterface errDialog = new ErrorDialog("Network response error", "Likely cause: " + errorResponse.getRequest());
+    public void errorReceived(ErrorResponse response) {
+        DialogInterface errDialog = new ErrorDialog("Network response error", "Likely cause: " + response.getRequest());
     }
 }

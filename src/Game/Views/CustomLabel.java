@@ -1,10 +1,12 @@
 package Game.Views;
 
+import javafx.scene.control.Label;
+
 /**
  * Created by peterzen on 2017-04-12.
  * Part of the othello project.
  */
-public class CustomLabel {
+public class CustomLabel extends Label {
     private int x;
     private int y;
 
