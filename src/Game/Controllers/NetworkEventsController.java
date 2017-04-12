@@ -67,17 +67,23 @@ public class NetworkEventsController implements NetworkEvents {
         int y = coordinates[1];
 
         // update view via BoardController
-        boardController.setMove(x, y, player);
+        boardController.setMove(x, y, player); // @TODO: update gameLogic
     }
 
     @Override
     public void ourTurn(OurTurnResponse response) {
-        System.out.println("ourTurn response!");
+        // update GUI (and enable possibility to move) to reflect turn change
+        StartGame.getBaseController().getBoardController().setOurTurn();
+
+        // let the AI generate a move if needed
+        if (StartGame.getBaseController().getControlsController().isBotPlaying()) {
+//            StartGame.getBaseController().getBoardController().doAIMove(); @TODO: need AI
+        }
     }
 
     @Override
     public void playerListReceived(PlayerListResponse response) {
-        System.out.println("playerList response!");
+        StartGame.getBaseController().getControlsController().updatePlayerList(response.getPlayerList());
     }
 
     @Override

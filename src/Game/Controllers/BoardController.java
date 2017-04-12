@@ -159,4 +159,8 @@ public class BoardController extends Board {
     private void clickToDoMove(MouseEvent mouseEvent) {
     }
 
+    public void setOurTurn() {
+        isOurTurn = true;
+        Platform.runLater(() -> gridPane.setStyle(ourTurnGridStyle));
+    }
 }
