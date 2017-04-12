@@ -58,6 +58,7 @@ public class BaseController extends Base {
 
     @Override
     protected void loadPartialViews() throws IOException {
+        System.out.println("Another init");
         // Load MenuView.fxml
         this.container.getChildren().add(FXMLLoader.load(this.getClass().getResource("/Framework/GUI/fxml/MenuView.fxml")));
         // Load BoardView.fxml

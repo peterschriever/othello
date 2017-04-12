@@ -6,7 +6,7 @@ import Framework.Game.GameLogicInterface;
 /**
  * Created by Ruben on 10-Apr-17.
  */
-public class AI implements BotInterface{
+public class AI implements BotInterface {
     public AI(GameLogicInterface gameLogic, char playerChar) {
 
     }

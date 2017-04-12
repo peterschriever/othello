@@ -15,6 +15,13 @@ import javafx.geometry.HPos;
 import javafx.scene.Node;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
+import Game.Views.CustomLabel;
+import javafx.application.Platform;
+import javafx.geometry.HPos;
+import javafx.scene.control.Label;
+import javafx.scene.image.Image;
+import javafx.scene.image.ImageView;
+import javafx.scene.input.MouseEvent;
 
 import java.io.IOException;
 import java.util.HashMap;
@@ -37,6 +44,8 @@ public class BoardController extends Board {
     private static final String ourTurnGridStyle = "-fx-border-color: green;-fx-border-width:3;-fx-padding: 10 10 10 10;-fx-border-insets: 10 10 10 10;";
     private static final String theirTurnGridStyle = "-fx-border-color: red;-fx-border-width:3;-fx-padding: 10 10 10 10;-fx-border-insets: 10 10 10 10;";
 
+    private boolean isOurTurn = false;
+
     public void initialize() {
         gameLogic = new Othello();
         try {
@@ -50,9 +59,8 @@ public class BoardController extends Board {
         cellWidth = (gridPane.getPrefWidth() / BOARDSIZE) - 2;
         cellHeight = (gridPane.getPrefWidth() / BOARDSIZE) - 2;
         drawGrid(BOARDSIZE);
-//        loadGrid(); @TODO
+        loadGrid();
     }
-
 
     public BotInterface getAI() {
         return ai;
@@ -120,4 +128,35 @@ public class BoardController extends Board {
         return newLabel;
 
     }
+
+    private void loadGrid() {
+        int i;
+        int j;
+        for (i = 0; i < BOARDSIZE; i++) {
+            for (j = 0; j < BOARDSIZE; j++) {
+                Image image = new Image(BoardController.class.getClassLoader().getResourceAsStream("./Empty.png"));
+                ImageView imageView = new ImageView();
+                imageView.setFitHeight(cellHeight - 5);
+                imageView.setFitWidth(cellWidth - 5);
+                imageView.setImage(image);
+                CustomLabel label = new CustomLabel();
+                label.setPrefSize(cellWidth, cellHeight);
+                label.setX(i);
+                label.setY(j);
+                label.setOnMouseClicked(this::clickToDoMove);
+                gridPane.setHalignment(label, HPos.CENTER);
+                label.setStyle(gridCellStyle);
+                label.setGraphic(imageView);
+
+                final int finali = i;
+                final int finalj = j;
+                Platform.runLater(() -> gridPane.add(label, finalj, finali));
+            }
+        }
+        gridPane.setStyle(preGameGridStyle);
+    }
+
+    private void clickToDoMove(MouseEvent mouseEvent) {
+    }
+
 }
