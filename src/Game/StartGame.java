@@ -17,6 +17,7 @@ import Game.Controllers.BaseController;
 import Game.Controllers.DialogEventsController;
 import Game.Controllers.NetworkEventsController;
 import javafx.application.Application;
+import javafx.application.Platform;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
@@ -54,13 +55,12 @@ public class StartGame extends Application implements GameStart {
         try {
             host = Config.get("network", "host");
             port = Integer.parseInt(Config.get("network", "port"));
+            setConnection(host, port);
         } catch (Exception e) {
             DialogInterface networkDialog = new ConnectionDialog(getDialogEventsController());
-            networkDialog.display(); // @TODO: implement ConnectionDialog callback
-            host = "localhost";
-            port = 7789;
+            Platform.runLater(networkDialog::display);
         }
-        conn = new Connection(host, port, networkEventHandler);
+
 
         if (!stage.isShowing()) {
             stage.show();
@@ -69,6 +69,10 @@ public class StartGame extends Application implements GameStart {
         // update and show the GUI
         updateGameScene();
         this.start();
+    }
+
+    public static void setConnection(String host, int port) throws Exception {
+        conn = new Connection(host, port, networkEventHandler);
     }
 
     public static DialogEvents getDialogEventsController() {

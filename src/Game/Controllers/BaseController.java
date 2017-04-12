@@ -27,7 +27,10 @@ public class BaseController extends Base {
     public void initialize() {
         super.initialize();
         // setup Connection response observer
-        StartGame.getConn().setupInputObserver();
+        if(StartGame.getConn() != null){
+            StartGame.getConn().setupInputObserver();
+        }
+
         try {
             attemptPlayerLogin(Config.get("game", "playerName"));
         } catch (IOException e) {
