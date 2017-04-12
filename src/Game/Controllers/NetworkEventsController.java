@@ -5,6 +5,8 @@ import Framework.Networking.NetworkEvents;
 import Framework.Networking.Response.*;
 import Game.StartGame;
 import javafx.application.Platform;
+import Game.Models.Othello;
+import Game.StartGame;
 
 /**
  * Created by peterzen on 2017-04-12.
@@ -46,6 +48,13 @@ public class NetworkEventsController implements NetworkEvents {
 
     @Override
     public void matchReceived(MatchReceivedResponse response) {
+        //Reset the board
+        StartGame.getBaseController().getBoardController().loadPreGameBoardState();
+
+        //Disable the controls
+        StartGame.getBaseController().getControlsController().disableControls();
+
+        StartGame.getBaseController().getBoardController().othello = new Othello();
 
     }
 

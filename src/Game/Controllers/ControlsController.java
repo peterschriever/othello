@@ -17,7 +17,6 @@ import java.util.List;
  * Part of the othello project.
  */
 public class ControlsController {
-
     private boolean isBotPlaying;
 
     @FXML
@@ -36,7 +35,7 @@ public class ControlsController {
     }
 
     /**
-     * Disable all the controls
+     * Disable or enable all the controls
      */
     public void disableControls() {
         if (!controlsBox.isDisable()) {
