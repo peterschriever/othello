@@ -3,6 +3,7 @@ package Game.Controllers;
 import Framework.AI.BotInterface;
 import Framework.GUI.Board;
 import Framework.Game.GameLogicInterface;
+import Game.Models.Othello;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -12,6 +13,7 @@ import java.util.Map;
  * Part of the othello project.
  */
 public class BoardController extends Board {
+    public Othello othello;
     private static final int BOARDSIZE = 8;
     private BotInterface AI;
     private GameLogicInterface gameLogic;
