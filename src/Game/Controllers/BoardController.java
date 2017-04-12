@@ -50,12 +50,12 @@ public class BoardController extends Board {
         cellWidth = (gridPane.getPrefWidth() / BOARDSIZE) - 2;
         cellHeight = (gridPane.getPrefWidth() / BOARDSIZE) - 2;
         drawGrid(BOARDSIZE);
-        loadGrid();
+//        loadGrid(); @TODO
     }
 
 
     public BotInterface getAI() {
-        return AI;
+        return ai;
     }
 
     public GameLogicInterface getGameLogic() {
@@ -93,7 +93,7 @@ public class BoardController extends Board {
 
         // model updaten
         char turn = player.charAt(0);
-        gameLogic.doTurn(y, x, turn);
+//        gameLogic.doTurn(y, x, turn); @TODO
     }
 
     private CustomLabel makeLabel(int x, int y, String turn) {
