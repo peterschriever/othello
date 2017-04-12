@@ -103,6 +103,12 @@ public class StartGame extends Application implements GameStart {
         // @DEBUG: challengeAcceptedResponse
         Response challengeResponse = new MoveResponse("bla", "", 0);
         challengeResponse.executeCallback();
+        Response challengeResponse1 = new MoveResponse("bla", "", 10);
+        challengeResponse1.executeCallback();
+        Response challengeResponse2 = new MoveResponse("bla", "", 20);
+        challengeResponse2.executeCallback();
+        Response challengeResponse3 = new MoveResponse("bla", "", 30);
+        challengeResponse3.executeCallback();
 
     }
 
