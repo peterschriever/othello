@@ -42,6 +42,8 @@ public class NetworkEventsController implements NetworkEvents {
 
         StartGame.getBaseController().getBoardController().othello = new Othello();
 
+        StartGame.getBaseController().getBoardController().startingPlayer = matchReceivedResponse.getStartingPlayer();
+
     }
 
     @Override
