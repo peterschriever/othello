@@ -28,6 +28,7 @@ import java.util.Map;
 public class BoardController extends Board {
     private BotInterface ai;
     public Othello othello;
+    public String startingPlayer;
     private static final int BOARDSIZE = 8;
     private BotInterface AI;
     private GameLogicInterface gameLogic;
@@ -100,31 +101,6 @@ public class BoardController extends Board {
 //        gameLogic.doTurn(y, x, turn); @TODO
     }
 
-    private CustomLabel makeLabel(int x, int y, String turn) {
-        CustomLabel newLabel = new CustomLabel();
-        ImageView imageView = new ImageView();
-        imageView.setFitHeight(50.0);
-        imageView.setFitWidth(50.0);
-        newLabel.setStyle(cellTakenStyle);
-        if (turn.equals("X")) {
-            Image image = new Image(BoardController.class.getClassLoader().getResourceAsStream("Black.png"));
-            imageView.setImage(image);
-            newLabel.setGraphic(imageView);
-            newLabel.setX(x);
-            newLabel.setY(y);
-            gridPane.setHalignment(newLabel, HPos.CENTER);
-        } else {
-            Image image = new Image(BoardController.class.getClassLoader().getResourceAsStream("White.png"));
-            imageView.setImage(image);
-            newLabel.setGraphic(imageView);
-            newLabel.setX(x);
-            newLabel.setY(y);
-            gridPane.setHalignment(newLabel, HPos.CENTER);
-        }
-        return newLabel;
-
-    }
-
     private void loadGrid() {
         int i;
         int j;
@@ -162,6 +138,26 @@ public class BoardController extends Board {
         // @TODO beginopstelling doorgeven aan model?
         // of wordt die opstelling al meteen gezet wann het model (Othello / GameLogic) wordt aangemaakt
         gridPane.setStyle(preGameGridStyle);
+    }
+
+    private CustomLabel makeLabel(int x, int y, String player) {
+        CustomLabel newLabel = new CustomLabel();
+        ImageView imageView = new ImageView();
+        imageView.setFitHeight(50.0);
+        imageView.setFitWidth(50.0);
+        newLabel.setStyle(cellTakenStyle);
+        if (player.equals(startingPlayer)) {
+            Image image = new Image(BoardController.class.getClassLoader().getResourceAsStream("Black.png"));
+            imageView.setImage(image);
+        } else {
+            Image image = new Image(BoardController.class.getClassLoader().getResourceAsStream("White.png"));
+            imageView.setImage(image);
+        }
+        newLabel.setGraphic(imageView);
+        newLabel.setX(x);
+        newLabel.setY(y);
+        gridPane.setHalignment(newLabel, HPos.CENTER);
+        return newLabel;
     }
 
     public void loadPreGameBoardState() {
