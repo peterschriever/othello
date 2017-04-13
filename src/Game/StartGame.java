@@ -38,7 +38,6 @@ public class StartGame extends Application implements GameStart {
 
 
     public static void main(String[] args) {
-        System.out.println("hello world");
         launch(args);
     }
 
@@ -98,8 +97,8 @@ public class StartGame extends Application implements GameStart {
         // when started from either the framework or standalone
 
         // @DEBUG: challengeAcceptedResponse
-        Response challengeResponse = new OurTurnResponse("");
-        challengeResponse.executeCallback();
+//        Response challengeResponse = new OurTurnResponse("");
+//        challengeResponse.executeCallback();
 
     }
 
@@ -118,7 +117,7 @@ public class StartGame extends Application implements GameStart {
         if (conn instanceof Connection && oldConn == null) {
             GameLogicInterface gameLogic = getBaseController().getBoardController().getGameLogic();
             BotInterface bot = getBaseController().getBoardController().getAI();
-            oldConn = new SimulatedConnection("Tic-tac-toe", gameLogic, bot, networkEventHandler);
+            oldConn = new SimulatedConnection("Reversi", gameLogic, bot, networkEventHandler);
         }
         // swaperoo: swap the Simulated and real Connection objects around
         tempConn = conn;

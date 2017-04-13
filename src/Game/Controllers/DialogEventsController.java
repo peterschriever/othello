@@ -1,6 +1,7 @@
 package Game.Controllers;
 
 import Framework.Dialogs.DialogEvents;
+import Game.StartGame;
 
 /**
  * Created by peterzen on 2017-04-12.
@@ -8,8 +9,8 @@ import Framework.Dialogs.DialogEvents;
  */
 public class DialogEventsController implements DialogEvents {
     @Override
-    public void attemptLogin(String s) {
-
+    public void attemptLogin(String playerName) {
+        StartGame.getBaseController().attemptPlayerLogin(playerName);
     }
 
     @Override

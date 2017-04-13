@@ -165,7 +165,6 @@ public class BoardController extends Board {
     }
 
     public void loadPreGameBoardState() {
-        System.out.println("PreGameBoardState Loaded!");
         Platform.runLater(() -> gridPane.getChildren().clear());
         Platform.runLater(this::loadGrid);
     }
