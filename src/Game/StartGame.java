@@ -39,7 +39,6 @@ public class StartGame extends Application implements GameStart {
 
 
     public static void main(String[] args) {
-        System.out.println("hello world");
         launch(args);
     }
 
@@ -70,8 +69,13 @@ public class StartGame extends Application implements GameStart {
         this.start();
     }
 
-    public static void setConnection(String host, int port) throws Exception {
-        conn = new Connection(host, port, networkEventHandler);
+    public static void setConnection(String host, int port) {
+        try {
+            conn = new Connection(host, port, networkEventHandler);
+        } catch (Exception e) {
+            DialogInterface networkDialog = new ConnectionDialog(StartGame.getDialogEventsController());
+            networkDialog.display();
+        }
     }
 
     public static DialogEvents getDialogEventsController() {
@@ -102,8 +106,8 @@ public class StartGame extends Application implements GameStart {
         // when started from either the framework or standalone
 
         // @DEBUG: challengeAcceptedResponse
-        Response challengeResponse = new OurTurnResponse("");
-        challengeResponse.executeCallback();
+//        Response challengeResponse = new OurTurnResponse("");
+//        challengeResponse.executeCallback();
 
     }
 

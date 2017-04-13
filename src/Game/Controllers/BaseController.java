@@ -27,7 +27,7 @@ public class BaseController extends Base {
     public void initialize() {
         super.initialize();
         // setup Connection response observer
-        if(StartGame.getConn() != null){
+        if (StartGame.getConn() != null) {
             StartGame.getConn().setupInputObserver();
         }
 
@@ -40,6 +40,12 @@ public class BaseController extends Base {
     }
 
     public void attemptPlayerLogin(String playerName) {
+        if (StartGame.getConn() == null) {
+            // Start a thread that polls until connection is not null, every 100ms
+            new Thread(new PollTillConnectionIsUp()).start();
+            return;
+        }
+
         Request loginRequest;
         ErrorDialog errorDialog;
 
@@ -50,7 +56,7 @@ public class BaseController extends Base {
                 loggedInPlayer = playerName;
                 return;
             }
-        }  catch (IOException|InterruptedException e) {
+        } catch (IOException | InterruptedException e) {
             errorDialog = new ErrorDialog("IO|InterruptedException: could not send game server Request", "Please contact a project developer.");
             Platform.runLater(errorDialog::display);
         }
@@ -90,5 +96,19 @@ public class BaseController extends Base {
 
     public ControlsController getControlsController() {
         return this.controlsController;
+    }
+
+    private class PollTillConnectionIsUp implements Runnable {
+        @Override
+        public void run() {
+            while (StartGame.getConn() == null) {
+                try {
+                    Thread.sleep(100);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+            }
+            attemptPlayerLogin(null);
+        }
     }
 }

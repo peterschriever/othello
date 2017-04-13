@@ -1,9 +1,7 @@
 package Game.Controllers;
 
-import Framework.Dialogs.ConnectionDialog;
 import Framework.Dialogs.DialogEvents;
-import Framework.Dialogs.DialogInterface;
-import Framework.GameStart;
+import Framework.Networking.Request.ChallengeAcceptRequest;
 import Game.StartGame;
 
 import java.io.IOException;
@@ -14,28 +12,25 @@ import java.io.IOException;
  */
 public class DialogEventsController implements DialogEvents {
     @Override
-    public void attemptLogin(String s) {
-
+    public void attemptLogin(String playerName) {
+        StartGame.getBaseController().attemptPlayerLogin(playerName);
     }
 
     @Override
-    public void challengeReceived(int i) {
-
+    public void challengeReceived(int challengeNr) {
+        ChallengeAcceptRequest acceptRequest = new ChallengeAcceptRequest(StartGame.getConn(), challengeNr);
+        try {
+            acceptRequest.execute();
+        } catch (IOException | InterruptedException e) {
+            e.printStackTrace();
+        }
     }
 
     @Override
     public void setupConnection(String ipAddress, String portNr){
         int portNumber = Integer.parseInt(portNr);
 
-        try {
-            StartGame.setConnection(ipAddress,portNumber);
-            StartGame.getConn().setupInputObserver();
-
-        } catch (Exception e) {
-            e.printStackTrace();
-
-            DialogInterface networkDialog = new ConnectionDialog(StartGame.getDialogEventsController());
-            networkDialog.display();
-        }
+        StartGame.setConnection(ipAddress,portNumber);
+        StartGame.getConn().setupInputObserver();
     }
 }
