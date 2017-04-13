@@ -14,6 +14,8 @@ import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.input.MouseEvent;
 
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -47,11 +49,14 @@ public class BoardController extends Board {
     }
 
     public void initialize() {
-        System.out.println("Init");
+//        System.out.println("Init");
         cellWidth = (gridPane.getPrefWidth() / BOARDSIZE) - 2;
         cellHeight = (gridPane.getPrefWidth() / BOARDSIZE) - 2;
         drawGrid(BOARDSIZE);
         loadGrid();
+
+        this.othello = new Othello();
+        othello.showBoard();
     }
 
     // List of coordinates
@@ -74,7 +79,7 @@ public class BoardController extends Board {
         for (i = 0; i < BOARDSIZE; i++) {
             for (j = 0; j < BOARDSIZE; j++) {
                 Image image = new Image(BoardController.class.getClassLoader().getResourceAsStream("Empty.png"));
-                System.out.println("I: " + i + " J: " + j);
+//                System.out.println("I: " + i + " J: " + j);
                 Image blackImage = new Image(BoardController.class.getClassLoader().getResourceAsStream("Black.png"));
                 Image whiteImage = new Image(BoardController.class.getClassLoader().getResourceAsStream("White.png"));
                 ImageView imageView = new ImageView();
@@ -113,6 +118,60 @@ public class BoardController extends Board {
     }
 
     private void clickToDoMove(MouseEvent mouseEvent) {
+        CustomLabel label = (CustomLabel) mouseEvent.getSource();
+
+        if(this.othello.isLegitMove(label.getX(), label.getY(), '1')) {
+            System.out.println("Uep");
+            //replace the old label with a stone
+            CustomLabel newLabel = this.makeLabel(label.getX(), label.getY(), "1");
+            gridPane.getChildren().remove(label);
+            gridPane.add(newLabel, label.getY(), label.getX());
+            //update othello
+            ArrayList<Integer[]> toSwap = othello.doTurn(label.getY(), label.getX(), '1');
+
+            for (Integer[] coords : toSwap) {
+                this.swap(coords);
+            }
+//            send moveRequest to the server
+        }
+        else {
+            //Show notification that the move is incorrect
+        }
+    }
+
+    private void swap(Integer[] coords) {
+        ObservableList<Node> childrenList = gridPane.getChildren();
+
+        for(Node label : childrenList) {
+            if (gridPane.getRowIndex(label).equals(coords[0]) && gridPane.getColumnIndex(label).equals(coords[1])) {
+                Platform.runLater(() -> gridPane.getChildren().remove(label));
+            }
+            Platform.runLater(() -> gridPane.add(makeLabel(coords[0], coords[1], "1"), coords[1], coords[0]));
+        }
+    }
+
+    private CustomLabel makeLabel(int y, int x, String player) {
+        CustomLabel label = new CustomLabel();
+        ImageView imageView = new ImageView();
+        imageView.setFitHeight(30.0);
+        imageView.setFitWidth(30.0);
+        label.setStyle(cellTakenStyle);
+        if (player.equals("1")) {
+            Image image = new Image(BoardController.class.getClassLoader().getResourceAsStream("./White.png"));
+            imageView.setImage(image);
+            label.setGraphic(imageView);
+            label.setX(x);
+            label.setY(y);
+            gridPane.setHalignment(label, HPos.CENTER);
+        } else {
+            Image image = new Image(BoardController.class.getClassLoader().getResourceAsStream("./Black.png"));
+            imageView.setImage(image);
+            label.setGraphic(imageView);
+            label.setX(x);
+            label.setY(y);
+            gridPane.setHalignment(label, HPos.CENTER);
+        }
+        return label;
     }
 
 }
