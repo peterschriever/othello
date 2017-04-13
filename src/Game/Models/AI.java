@@ -1,16 +1,23 @@
 package Game.Models;
 
+import Framework.AI.BotInterface;
+import Framework.Game.GameLogicInterface;
+
 /**
  * Created by Ruben on 10-Apr-17.
  */
-public class AI {
+public class AI implements BotInterface {
+    public AI(GameLogicInterface gameLogic, char playerChar) {
 
-    private Othello othello;
+    }
 
-    private String[][] board;
+    @Override
+    public char getPlayer() {
+        return 0;
+    }
 
-    public AI(Othello othello, String[][] board) {
-        this.othello = othello;
-        this.board = board;
+    @Override
+    public int[] doTurn(char[][] chars) {
+        return new int[0];
     }
 }

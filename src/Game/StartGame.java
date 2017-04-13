@@ -10,8 +10,7 @@ import Framework.GameStart;
 import Framework.Networking.Connection;
 import Framework.Networking.ConnectionInterface;
 import Framework.Networking.NetworkEvents;
-import Framework.Networking.Response.ChallengeReceivedResponse;
-import Framework.Networking.Response.Response;
+import Framework.Networking.Response.*;
 import Framework.Networking.SimulatedConnection;
 import Game.Controllers.BaseController;
 import Game.Controllers.DialogEventsController;
@@ -99,7 +98,7 @@ public class StartGame extends Application implements GameStart {
         // when started from either the framework or standalone
 
         // @DEBUG: challengeAcceptedResponse
-        Response challengeResponse = new ChallengeReceivedResponse("bla", "Tic-tac-toe", 12);
+        Response challengeResponse = new OurTurnResponse("");
         challengeResponse.executeCallback();
 
     }

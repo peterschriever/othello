@@ -1,9 +1,11 @@
 package Game.Models;
 
+import Framework.Game.GameLogicInterface;
+
 /**
  * Created by Ruben on 10-Apr-17.
  */
-public class Othello {
+public class Othello implements GameLogicInterface {
 
     private String[][] board;
 
@@ -19,5 +21,10 @@ public class Othello {
 
         this.board[4][5] = "o";
         this.board[5][4] = "o";
+    }
+
+    @Override
+    public char[][] getBoard() {
+        return new char[0][];
     }
 }
