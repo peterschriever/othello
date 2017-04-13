@@ -10,13 +10,13 @@ import Framework.GameStart;
 import Framework.Networking.Connection;
 import Framework.Networking.ConnectionInterface;
 import Framework.Networking.NetworkEvents;
-import Framework.Networking.Response.ChallengeReceivedResponse;
-import Framework.Networking.Response.Response;
+import Framework.Networking.Response.*;
 import Framework.Networking.SimulatedConnection;
 import Game.Controllers.BaseController;
 import Game.Controllers.DialogEventsController;
 import Game.Controllers.NetworkEventsController;
 import javafx.application.Application;
+import javafx.application.Platform;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
@@ -39,7 +39,6 @@ public class StartGame extends Application implements GameStart {
 
 
     public static void main(String[] args) {
-        System.out.println("hello world");
         launch(args);
     }
 
@@ -54,13 +53,12 @@ public class StartGame extends Application implements GameStart {
         try {
             host = Config.get("network", "host");
             port = Integer.parseInt(Config.get("network", "port"));
+            setConnection(host, port);
         } catch (Exception e) {
             DialogInterface networkDialog = new ConnectionDialog(getDialogEventsController());
-            networkDialog.display(); // @TODO: implement ConnectionDialog callback
-            host = "localhost";
-            port = 7789;
+            Platform.runLater(networkDialog::display);
         }
-        conn = new Connection(host, port, networkEventHandler);
+
 
         if (!stage.isShowing()) {
             stage.show();
@@ -69,6 +67,15 @@ public class StartGame extends Application implements GameStart {
         // update and show the GUI
         updateGameScene();
         this.start();
+    }
+
+    public static void setConnection(String host, int port) {
+        try {
+            conn = new Connection(host, port, networkEventHandler);
+        } catch (Exception e) {
+            DialogInterface networkDialog = new ConnectionDialog(StartGame.getDialogEventsController());
+            Platform.runLater(networkDialog::display);
+        }
     }
 
     public static DialogEvents getDialogEventsController() {
@@ -83,7 +90,7 @@ public class StartGame extends Application implements GameStart {
 
         Scene gameScene = new Scene(root);
         this.scene = gameScene;
-        this.stage.setScene(gameScene);
+        Platform.runLater(() -> this.stage.setScene(gameScene));
     }
 
     public static BaseController getBaseController() {
@@ -99,8 +106,8 @@ public class StartGame extends Application implements GameStart {
         // when started from either the framework or standalone
 
         // @DEBUG: challengeAcceptedResponse
-        Response challengeResponse = new ChallengeReceivedResponse("bla", "Tic-tac-toe", 12);
-        challengeResponse.executeCallback();
+//        Response challengeResponse = new OurTurnResponse("");
+//        challengeResponse.executeCallback();
 
     }
 
@@ -119,7 +126,7 @@ public class StartGame extends Application implements GameStart {
         if (conn instanceof Connection && oldConn == null) {
             GameLogicInterface gameLogic = getBaseController().getBoardController().getGameLogic();
             BotInterface bot = getBaseController().getBoardController().getAI();
-            oldConn = new SimulatedConnection("Tic-tac-toe", gameLogic, bot, networkEventHandler);
+            oldConn = new SimulatedConnection("Reversi", gameLogic, bot, networkEventHandler);
         }
         // swaperoo: swap the Simulated and real Connection objects around
         tempConn = conn;

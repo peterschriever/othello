@@ -1,21 +1,28 @@
 package Game.Controllers;
 
 import Framework.AI.BotInterface;
+import Framework.Config;
+import Framework.Dialogs.DialogInterface;
+import Framework.Dialogs.ErrorDialog;
 import Framework.GUI.Board;
 import Framework.Game.GameLogicInterface;
+import Framework.Networking.Request.MoveRequest;
+import Framework.Networking.Request.Request;
+import Game.Models.AI;
 import Game.Models.Othello;
+import Game.StartGame;
 import Game.Views.CustomLabel;
 import javafx.application.Platform;
 import javafx.collections.ObservableList;
 import javafx.geometry.HPos;
 import javafx.scene.Node;
-import javafx.scene.control.Label;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.input.MouseEvent;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -24,39 +31,46 @@ import java.util.Map;
  * Part of the othello project.
  */
 public class BoardController extends Board {
+    private BotInterface ai;
     public Othello othello;
+    public String startingPlayer;
     private static final int BOARDSIZE = 8;
     private BotInterface AI;
-    private GameLogicInterface gameLogic;
-
-    private Label[] listOfLabels;
-    private boolean isOurTurn = false;
+    private static double cellWidth;
+    private static double cellHeight;
 
     private static final String gridCellStyle = "-fx-border-color: black; -fx-border-width:1;";
     private static final String cellTakenStyle = "-fx-border-color: red; -fx-border-width:1;";
     private static final String preGameGridStyle = "-fx-border-color: yellow;-fx-border-width:3;-fx-padding: 10 10 10 10;-fx-border-insets: 10 10 10 10;";
     private static final String ourTurnGridStyle = "-fx-border-color: green;-fx-border-width:3;-fx-padding: 10 10 10 10;-fx-border-insets: 10 10 10 10;";
     private static final String theirTurnGridStyle = "-fx-border-color: red;-fx-border-width:3;-fx-padding: 10 10 10 10;-fx-border-insets: 10 10 10 10;";
-    private static double cellWidth;
-    private static double cellHeight;
 
-    public BotInterface getAI() {
-        return AI;
-    }
-
-    public GameLogicInterface getGameLogic() {
-        return gameLogic;
-    }
+    private boolean isOurTurn = false;
 
     public void initialize() {
-//        System.out.println("Init");
+        othello = new Othello();
+        try {
+            ai = new AI(othello, Config.get("game", "useCharacterForOpponent").charAt(0));
+        } catch (IOException e) {
+            DialogInterface errDialog = new ErrorDialog("Config error", "Could not load property: useCharacterForPlayer." +
+                    "\nPlease check your game.properties file.");
+            errDialog.display();
+        }
+
         cellWidth = (gridPane.getPrefWidth() / BOARDSIZE) - 2;
         cellHeight = (gridPane.getPrefWidth() / BOARDSIZE) - 2;
         drawGrid(BOARDSIZE);
         loadGrid();
 
-        this.othello = new Othello();
         othello.showBoard();
+    }
+
+    public BotInterface getAI() {
+        return ai;
+    }
+
+    public Othello getGameLogic() {
+        return othello;
     }
 
     // List of coordinates
@@ -72,38 +86,68 @@ public class BoardController extends Board {
         return listOfCoordinates;
     }
 
+    public void loadPreGameBoardStyle() {
+        Platform.runLater(() -> gridPane.setStyle(preGameGridStyle));
+    }
+
+    public synchronized void setMove(int x, int y, String player) {
+        // model updaten
+        char playerChar = '1';
+        if (player.equals(startingPlayer)) {
+            playerChar = '2';
+        }
+        ArrayList<Integer[]> toSwap = othello.doTurn(y, x, playerChar); // @TODO maybe switch x and y
+
+        CustomLabel newLabel = makeLabel(y, x, player);
+        ObservableList<Node> childrenList = gridPane.getChildren();
+        for (Node node : childrenList) {
+            if (gridPane.getRowIndex(node) == y && gridPane.getColumnIndex(node) == x) {
+                Platform.runLater(() -> gridPane.getChildren().remove(node));
+                break;
+            }
+        }
+        // gridPane updaten with move
+        Platform.runLater(() -> gridPane.add(newLabel, x, y));
+
+        try {
+            Thread.sleep(10);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+        for (Integer[] coords : toSwap) {
+            this.swap(coords, player);
+        }
+    }
+
     private void loadGrid() {
-        int i;
-        int j;
-        // i = row, j = column
-        for (i = 0; i < BOARDSIZE; i++) {
-            for (j = 0; j < BOARDSIZE; j++) {
+        // y = row, x = column
+        for (int y = 0; y < BOARDSIZE; y++) {
+            for (int x = 0; x < BOARDSIZE; x++) {
                 Image image = new Image(BoardController.class.getClassLoader().getResourceAsStream("Empty.png"));
-//                System.out.println("I: " + i + " J: " + j);
                 Image blackImage = new Image(BoardController.class.getClassLoader().getResourceAsStream("Black.png"));
                 Image whiteImage = new Image(BoardController.class.getClassLoader().getResourceAsStream("White.png"));
                 ImageView imageView = new ImageView();
                 imageView.setFitHeight(cellHeight - 5);
                 imageView.setFitWidth(cellWidth - 5);
-                if (i == 3 && j == 3 || i == 4 && j == 4) {
+                if (y == 3 && x == 3 || y == 4 && x == 4) {
                     imageView.setImage(whiteImage);
-                } else if (i == 3 && j == 4 || i == 4 && j == 3) {
+                } else if (y == 3 && x == 4 || y == 4 && x == 3) {
                     imageView.setImage(blackImage);
                 } else {
                     imageView.setImage(image);
                 }
                 CustomLabel label = new CustomLabel();
                 label.setPrefSize(cellWidth, cellHeight);
-                label.setX(i);
-                label.setY(j);
+                label.setY(x);
+                label.setX(y);
                 label.setOnMouseClicked(this::clickToDoMove);
                 gridPane.setHalignment(label, HPos.CENTER);
                 label.setStyle(gridCellStyle);
                 label.setGraphic(imageView);
 
-                final int finali = i;
-                final int finalj = j;
-                Platform.runLater(() -> gridPane.add(label, finalj, finali));
+                final int finali = x;
+                final int finalj = y;
+                Platform.runLater(() -> gridPane.add(label, finali, finalj));
             }
         }
         // @TODO beginopstelling doorgeven aan model?
@@ -111,8 +155,27 @@ public class BoardController extends Board {
         gridPane.setStyle(preGameGridStyle);
     }
 
+    private synchronized CustomLabel makeLabel(int x, int y, String player) {
+        CustomLabel newLabel = new CustomLabel();
+        ImageView imageView = new ImageView();
+        imageView.setFitHeight(30.0);
+        imageView.setFitWidth(30.0);
+        newLabel.setStyle(cellTakenStyle);
+        if (player.equals(startingPlayer)) {
+            Image image = new Image(BoardController.class.getClassLoader().getResourceAsStream("Black.png"));
+            imageView.setImage(image);
+        } else {
+            Image image = new Image(BoardController.class.getClassLoader().getResourceAsStream("White.png"));
+            imageView.setImage(image);
+        }
+        newLabel.setGraphic(imageView);
+        newLabel.setX(x);
+        newLabel.setY(y);
+        gridPane.setHalignment(newLabel, HPos.CENTER);
+        return newLabel;
+    }
+
     public void loadPreGameBoardState() {
-        System.out.println("PreGameBoardState Loaded!");
         Platform.runLater(() -> gridPane.getChildren().clear());
         Platform.runLater(this::loadGrid);
     }
@@ -120,58 +183,51 @@ public class BoardController extends Board {
     private void clickToDoMove(MouseEvent mouseEvent) {
         CustomLabel label = (CustomLabel) mouseEvent.getSource();
 
-        if(this.othello.isLegitMove(label.getX(), label.getY(), '1')) {
+        char playerChar = '1';
+        if (StartGame.getBaseController().getLoggedInPlayer().equals(startingPlayer)) {
+            playerChar = '2';
+        }
+
+        if (this.othello.isLegitMove(label.getY(), label.getX(), playerChar)) {
             System.out.println("Uep");
             //replace the old label with a stone
-            CustomLabel newLabel = this.makeLabel(label.getX(), label.getY(), "1");
+            CustomLabel newLabel = this.makeLabel(label.getX(), label.getY(), StartGame.getBaseController().getLoggedInPlayer());
             gridPane.getChildren().remove(label);
             gridPane.add(newLabel, label.getY(), label.getX());
-            //update othello
-            ArrayList<Integer[]> toSwap = othello.doTurn(label.getY(), label.getX(), '1');
 
+            //update othello
+            ArrayList<Integer[]> toSwap = othello.doTurn(label.getY(), label.getX(), playerChar);
             for (Integer[] coords : toSwap) {
-                this.swap(coords);
+                this.swap(coords, StartGame.getBaseController().getLoggedInPlayer());
             }
-//            send moveRequest to the server
-        }
-        else {
+            // send moveRequest to the server
+            int pos = label.getY() * BOARDSIZE + label.getX();
+            Request moveRequest = new MoveRequest(StartGame.getConn(), pos);
+            try {
+                moveRequest.execute();
+                isOurTurn = false;
+                Platform.runLater(() -> gridPane.setStyle(theirTurnGridStyle));
+            } catch (IOException | InterruptedException e) {
+                e.printStackTrace();
+            }
+        } else {
             //Show notification that the move is incorrect
         }
     }
 
-    private void swap(Integer[] coords) {
+    private synchronized void swap(Integer[] coords, String player) {
         ObservableList<Node> childrenList = gridPane.getChildren();
 
-        for(Node label : childrenList) {
-            if (gridPane.getRowIndex(label).equals(coords[0]) && gridPane.getColumnIndex(label).equals(coords[1])) {
+        for (Node label : childrenList) {
+            if (gridPane.getRowIndex(label).equals(coords[1]) && gridPane.getColumnIndex(label).equals(coords[0])) {
                 Platform.runLater(() -> gridPane.getChildren().remove(label));
             }
-            Platform.runLater(() -> gridPane.add(makeLabel(coords[0], coords[1], "1"), coords[1], coords[0]));
+            Platform.runLater(() -> gridPane.add(makeLabel(coords[1], coords[0], player), coords[0], coords[1]));
         }
     }
 
-    private CustomLabel makeLabel(int y, int x, String player) {
-        CustomLabel label = new CustomLabel();
-        ImageView imageView = new ImageView();
-        imageView.setFitHeight(30.0);
-        imageView.setFitWidth(30.0);
-        label.setStyle(cellTakenStyle);
-        if (player.equals("1")) {
-            Image image = new Image(BoardController.class.getClassLoader().getResourceAsStream("./White.png"));
-            imageView.setImage(image);
-            label.setGraphic(imageView);
-            label.setX(x);
-            label.setY(y);
-            gridPane.setHalignment(label, HPos.CENTER);
-        } else {
-            Image image = new Image(BoardController.class.getClassLoader().getResourceAsStream("./Black.png"));
-            imageView.setImage(image);
-            label.setGraphic(imageView);
-            label.setX(x);
-            label.setY(y);
-            gridPane.setHalignment(label, HPos.CENTER);
-        }
-        return label;
+    public void setOurTurn() {
+        isOurTurn = true;
+        Platform.runLater(() -> gridPane.setStyle(ourTurnGridStyle));
     }
-
 }

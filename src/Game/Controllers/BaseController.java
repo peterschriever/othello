@@ -25,10 +25,17 @@ public class BaseController extends Base {
 
     @Override
     public void initialize() {
-        super.initialize();
         // setup Connection response observer
+        if (StartGame.getConn() == null) {
+            // Start a thread that polls until connection is not null, every 100ms
+            Thread t = new Thread(new PollTillConnectionIsUp());
+            t.start();
+            return;
+        }
         StartGame.getConn().setupInputObserver();
+
         try {
+            loadPartialViews();
             attemptPlayerLogin(Config.get("game", "playerName"));
         } catch (IOException e) {
             ErrorDialog errorDialog = new ErrorDialog("IOException: could not load from game.properties", "Please contact a project developer.");
@@ -37,6 +44,12 @@ public class BaseController extends Base {
     }
 
     public void attemptPlayerLogin(String playerName) {
+        if (StartGame.getConn() == null) {
+            // Start a thread that polls until connection is not null, every 100ms
+            new Thread(new PollTillConnectionIsUp()).start();
+            return;
+        }
+
         Request loginRequest;
         ErrorDialog errorDialog;
 
@@ -47,7 +60,7 @@ public class BaseController extends Base {
                 loggedInPlayer = playerName;
                 return;
             }
-        }  catch (IOException|InterruptedException e) {
+        } catch (IOException | InterruptedException e) {
             errorDialog = new ErrorDialog("IO|InterruptedException: could not send game server Request", "Please contact a project developer.");
             Platform.runLater(errorDialog::display);
         }
@@ -58,7 +71,6 @@ public class BaseController extends Base {
 
     @Override
     protected void loadPartialViews() throws IOException {
-        System.out.println("Another init");
         // Load MenuView.fxml
         this.container.getChildren().add(FXMLLoader.load(this.getClass().getResource("/Framework/GUI/fxml/MenuView.fxml")));
         // Load BoardView.fxml
@@ -67,7 +79,6 @@ public class BaseController extends Base {
         this.boardController = new BoardController();
         fxmlLoader.setController(this.boardController);
         Parent partial = fxmlLoader.load();
-        System.out.println("loading partials from BaseController!");
         container.getChildren().add(partial);
 
         this.controlsController = new ControlsController();
@@ -87,5 +98,19 @@ public class BaseController extends Base {
 
     public ControlsController getControlsController() {
         return this.controlsController;
+    }
+
+    private class PollTillConnectionIsUp implements Runnable {
+        @Override
+        public void run() {
+            while (StartGame.getConn() == null) {
+                try {
+                    Thread.sleep(10);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+            }
+            Platform.runLater(BaseController.this::initialize);
+        }
     }
 }

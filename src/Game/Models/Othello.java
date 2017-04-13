@@ -1,17 +1,14 @@
 package Game.Models;
 
-import Game.Views.CustomLabel;
+import Framework.Game.GameLogicInterface;
 
-import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.HashMap;
-import java.util.LinkedList;
 
 /**
  * Created by Ruben on 10-Apr-17.
  */
-public class Othello {
+public class Othello implements GameLogicInterface {
 
     private char[][] board;
 
@@ -27,8 +24,10 @@ public class Othello {
         this.board[3][3] = '1';
         this.board[4][4] = '1';
 
-        this.board[3][4] =  '2';
-        this.board[4][3] =  '2';
+        this.board[3][4] = '2';
+        this.board[4][3] = '2';
+
+        this.showBoard();
     }
 
     public void showBoard() {
@@ -37,10 +36,10 @@ public class Othello {
 
     public boolean isLegitMove(int y, int x, char player) {
         ArrayList<Integer[]> canSetMove = this.doTurn(y, x, player);
-        System.out.println(canSetMove.size());
+        System.out.println(canSetMove.toString());
         this.board[y][x] = 0;
 
-        if(canSetMove.size() > 0) {
+        if (canSetMove.size() > 0) {
             for (Integer[] coords : canSetMove) {
                 this.board[coords[0]][coords[1]] = this.switchPlayer(player);
             }
@@ -52,24 +51,26 @@ public class Othello {
     }
 
     /**
-     *
-     *
      * source: http://stackoverflow.com/questions/20420065/loop-diagonally-through-two-dimensional-array#answer-20422854
      */
     public ArrayList<Integer[]> doTurn(int y, int x, char player) {
+        System.out.println("doTurn pos: " + y + "," + x);
 
         this.board[y][x] = player;
 
-        int[] neighborsX = {-1, -1, -1, 0, 0, 1, 1, 1};
         int[] neighborsY = {-1, 0, 1, -1, 1, -1, 0, 1};
+        int[] neighborsX = {-1, -1, -1, 0, 0, 1, 1, 1};
         ArrayList<Integer[]> toTurn = new ArrayList<>();
 
         for (int i = 0; i < neighborsX.length; i++) {
-
-            toTurn.addAll(checkNeighbors(new ArrayList<>(), neighborsY[i], neighborsX[i], y, x, player));
+            ArrayList<Integer[]> flips = checkNeighbors(new ArrayList<>(), neighborsY[i], neighborsX[i], y, x, player);
+            if (flips != null && flips.size() > 0) {
+                System.out.println("Flips found: " + flips.get(0));
+                toTurn.addAll(flips);
+            }
         }
 
-        for(Integer[] coords : toTurn) {
+        for (Integer[] coords : toTurn) {
             this.board[coords[0]][coords[1]] = player;
         }
 
@@ -81,28 +82,31 @@ public class Othello {
         int newY = currentY + directionY;
         int newX = currentX + directionX;
 
-        if(!this.isInBound(newY, newX)) {
-            return new ArrayList<>();
+        if (!this.isInBound(newY, newX)) {
+            System.out.println("1 not in bounds");
+            return null;
         }
 
-        if(this.board[newY][newX] == 0) {
-            return new ArrayList<>();
+        if (this.board[newY][newX] == 0) {
+            System.out.println("2 empty tile y: " + newY + ", x: " + newX);
+            return null;
         }
 
-        if(this.board[newY][newX] == player) {
+        if (this.board[newY][newX] == player) {
+            System.out.println("3 player tile found");
             return toTurn;
         }
-        else {
-            toTurn.add(new Integer[]{newY, newX});
-            return checkNeighbors(toTurn, directionY, directionX, newY, newX, player);
-        }
+
+        toTurn.add(new Integer[]{newY, newX});
+        System.out.println("0 flippable added, continue down the rabbit hole y: " + newY + ", x: " + newX);
+        return checkNeighbors(toTurn, directionY, directionX, newY, newX, player);
+
     }
 
     private boolean isInBound(int currentY, int currentX) {
         try {
             char c = this.board[currentY][currentX];
-        }
-        catch (IndexOutOfBoundsException e) {
+        } catch (IndexOutOfBoundsException e) {
             return false;
         }
 
@@ -110,11 +114,14 @@ public class Othello {
     }
 
     private char switchPlayer(char s) {
-        if(s == '1') {
+        if (s == '1') {
             return '2';
         }
         return '1';
     }
 
-
+    @Override
+    public char[][] getBoard() {
+        return this.board;
+    }
 }
