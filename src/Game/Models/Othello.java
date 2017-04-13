@@ -2,20 +2,32 @@ package Game.Models;
 
 import Framework.Game.GameLogicInterface;
 
-import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Stack;
 
 /**
  * Created by Ruben on 10-Apr-17.
  */
 public class Othello implements GameLogicInterface {
+    // @TODO idea; use Stack to put all the 'to-be-swapped' stones on, then when updating gui with swaps
+    // @TODO (in seperate thread for perf) consume them
 
     private char[][] board;
+    private Stack<Coords> toBeSwapped;
 
     public Othello() {
         this.board = new char[8][8];
+        this.toBeSwapped = new Stack<>();
 
         this.initFirstState();
+    }
+
+    public Coords consumeSwappable() {
+        if (toBeSwapped.empty()) {
+            return null;
+        }
+
+        return toBeSwapped.pop();
     }
 
     private void initFirstState() {
@@ -34,78 +46,86 @@ public class Othello implements GameLogicInterface {
         System.out.println(Arrays.deepToString(this.board));
     }
 
+    // using the private method of doTurn; which is called with saveSwaps=false
     public boolean isLegitMove(int x, int y, char player) {
-        ArrayList<Integer[]> canSetMove = this.doTurn(x, y, player);
-        this.board[x][y] = 0;
+        boolean result = doTurn(x, y, player, false);
+        return result;
+    }
 
-        if (canSetMove.size() > 0) {
-            for (Integer[] coords : canSetMove) {
-                this.board[coords[0]][coords[1]] = this.switchPlayer(player);
-            }
-
-            return true;
-        }
-
-        return false;
+    // when calling doTurn from outside this class; do this to force saveSwaps=true
+    public boolean doTurn(int x, int y, char player) {
+        return doTurn(x, y, player, true);
     }
 
     /**
      * source: http://stackoverflow.com/questions/20420065/loop-diagonally-through-two-dimensional-array#answer-20422854
      */
-    public ArrayList<Integer[]> doTurn(int x, int y, char player) {
-
-        this.board[x][y] = player;
+    private boolean doTurn(int x, int y, char player, boolean saveSwaps) {
+        if (saveSwaps) {
+            this.board[x][y] = player;
+        }
 
         int[] neighborsY = {-1, 0, 1, -1, 1, -1, 0, 1};
         int[] neighborsX = {-1, -1, -1, 0, 0, 1, 1, 1};
-        ArrayList<Integer[]> toTurn = new ArrayList<>();
+        boolean result = false;
 
         for (int i = 0; i < neighborsX.length; i++) {
-            ArrayList<Integer[]> flips = checkNeighbors(new ArrayList<>(), neighborsX[i], neighborsY[i], x, y, player);
-            if (flips != null && flips.size() > 0) {
-//                for (Integer[] flip : flips) {
-//                    System.out.println("flip found: 0:" + flip[0] + ", 1:" + flip[1]);
-//                }
-                toTurn.addAll(flips);
+            Coords[] flips = checkNeighbors(
+                    new Coords[16],
+                    new int[]{neighborsX[i], neighborsY[i]},
+                    new int[]{x, y},
+                    player,
+                    0
+            );
+
+            if (flips != null) {
+                result = true;
+
+                if (!saveSwaps) {
+                    continue; // continue before saving the swaps
+                }
+
+                for (Coords flip : flips) {
+                    if (flip == null) {
+                        continue;
+                    }
+                    this.toBeSwapped.push(flip);
+
+                    // @TODO: decide whether to adjust internal board here or at consumption of stack
+                    this.board[flip.x][flip.y] = switchPlayer(player);
+                }
             }
         }
-
-        for (Integer[] coords : toTurn) {
-            this.board[coords[0]][coords[1]] = player;
-        }
-
-        return toTurn;
+        // there were no swaps: false result, otherwise true
+        return result;
     }
 
-    private ArrayList<Integer[]> checkNeighbors(ArrayList<Integer[]> toTurn, int directionX, int directionY, int currentX, int currentY, char player) {
-
-        int newX = currentX + directionX;
-        int newY = currentY + directionY;
+    private Coords[] checkNeighbors(Coords[] toTurn, int[] direction, int[] current, char player, int count) {
+        int newX = current[0] + direction[0];
+        int newY = current[1] + direction[1];
 
         if (!this.isInBound(newX, newY)) {
-//            System.out.println("1 not in bounds");
             return null;
         }
 
         if (this.board[newX][newY] == 0) {
-//            System.out.println("2 empty tile x: " + newX + ", y: " + newY);
             return null;
         }
 
         if (this.board[newX][newY] == player) {
-//            System.out.println("3 player tile found");
             return toTurn;
         }
 
-        toTurn.add(new Integer[]{newX, newY});
-//        System.out.println("0 flippable added, continue down the rabbit hole x: " + newX + ", y: " + newY);
-        return checkNeighbors(toTurn, directionX, directionY, newX, newY, player);
+        toTurn[count] = new Coords(newX, newY);
+        count++;
+
+        return checkNeighbors(toTurn, direction, new int[]{newX, newY}, player, count);
 
     }
 
     private boolean isInBound(int currentX, int currentY) {
         try {
-            char c = this.board[currentY][currentX];
+            char c = this.board[currentX][currentY];
         } catch (IndexOutOfBoundsException e) {
             return false;
         }
@@ -123,5 +143,15 @@ public class Othello implements GameLogicInterface {
     @Override
     public char[][] getBoard() {
         return this.board;
+    }
+
+    public class Coords {
+        public int x;
+        public int y;
+
+        private Coords(int x, int y) {
+            this.x = x;
+            this.y = y;
+        }
     }
 }

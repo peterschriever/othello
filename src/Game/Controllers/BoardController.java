@@ -13,6 +13,7 @@ import Game.StartGame;
 import Game.Views.CustomLabel;
 import javafx.application.Platform;
 import javafx.collections.ObservableList;
+import javafx.concurrent.Task;
 import javafx.geometry.HPos;
 import javafx.scene.Node;
 import javafx.scene.image.Image;
@@ -28,12 +29,12 @@ import java.util.Map;
  * Created by peterzen on 2017-04-12.
  * Part of the othello project.
  */
+// @TODO: idea; make stack of similar Platform.runLater items and run them in a Task, or single Platform.runLater call
 public class BoardController extends Board {
     private BotInterface ai;
     public Othello othello;
     public String startingPlayer;
     private static final int BOARDSIZE = 8;
-    private BotInterface AI;
     private static double cellWidth;
     private static double cellHeight;
 
@@ -89,34 +90,17 @@ public class BoardController extends Board {
     }
 
     public synchronized void setMove(int x, int y, String player) {
-        // model updaten
+        // Update gameLogic models:
         char playerChar = '1'; // 1: white
         if (player.equals(startingPlayer)) {
             playerChar = '2'; // 2: black
         }
 
-        ArrayList<Integer[]> toSwap = othello.doTurn(x, y, playerChar); // @TODO maybe switch x and y
+        othello.doTurn(x, y, playerChar); // swaps are place on Stack
 
-        CustomLabel newLabel = makeLabel(x, y, player);
-        ObservableList<Node> childrenList = gridPane.getChildren();
-        for (Node node : childrenList) {
-            if (gridPane.getRowIndex(node) == y && gridPane.getColumnIndex(node) == x) {
-                Platform.runLater(() -> gridPane.getChildren().remove(node));
-                break;
-            }
-        }
-        // gridPane updaten with move
-        Platform.runLater(() -> gridPane.add(newLabel, x, y));
-
-        // @TODO: make a task to swap all the stones, gui updates need optimisation
-        try {
-            Thread.sleep(10);
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
-        for (Integer[] coords : toSwap) {
-            this.swap(coords, player);
-        }
+        // Update GUI:
+        MoveUpdateTask moveUpdateTask = new MoveUpdateTask(x, y, player);
+        new Thread(moveUpdateTask).start();
     }
 
     private void loadGrid() {
@@ -151,90 +135,143 @@ public class BoardController extends Board {
 
                 final int finali = x;
                 final int finalj = y;
-                Platform.runLater(() -> gridPane.add(label, finali, finalj));
+                gridPane.add(label, finali, finalj);
             }
         }
-        // @TODO beginopstelling doorgeven aan model?
-        // of wordt die opstelling al meteen gezet wann het model (Othello / GameLogic) wordt aangemaakt
+
         gridPane.setStyle(preGameGridStyle);
     }
 
-    private synchronized CustomLabel makeLabel(int x, int y, String player) {
+    private CustomLabel makeLabel(int x, int y, String player) {
         CustomLabel newLabel = new CustomLabel();
+
         ImageView imageView = new ImageView();
         imageView.setFitHeight(30.0);
         imageView.setFitWidth(30.0);
+
         newLabel.setStyle(cellTakenStyle);
+
+        Image image = new Image(BoardController.class.getClassLoader().getResourceAsStream("White.png"));
         if (player.equals(startingPlayer)) {
-            Image image = new Image(BoardController.class.getClassLoader().getResourceAsStream("Black.png"));
-            imageView.setImage(image);
-        } else {
-            Image image = new Image(BoardController.class.getClassLoader().getResourceAsStream("White.png"));
-            imageView.setImage(image);
+            image = new Image(BoardController.class.getClassLoader().getResourceAsStream("Black.png"));
         }
+        imageView.setImage(image);
+
+
         newLabel.setGraphic(imageView);
         newLabel.setX(x);
         newLabel.setY(y);
-        gridPane.setHalignment(newLabel, HPos.CENTER);
+        gridPane.setHalignment(newLabel, HPos.CENTER); //@TODO: does this actually do something?
         return newLabel;
     }
 
     public void loadPreGameBoardState() {
-        Platform.runLater(() -> gridPane.getChildren().clear());
-        Platform.runLater(this::loadGrid);
+        Platform.runLater(() -> {
+            gridPane.getChildren().clear();
+            this.loadGrid();
+        });
     }
 
     private void clickToDoMove(MouseEvent mouseEvent) {
+        if (!isOurTurn) {
+            DialogInterface errDialog = new ErrorDialog("Not your turn!", "Please wait until the borders are green");
+            errDialog.display();
+            return;
+        }
+
+        // Setup variables
         CustomLabel label = (CustomLabel) mouseEvent.getSource();
+        String loggedInPlayer = StartGame.getBaseController().getLoggedInPlayer();
 
         char playerChar = '1';
-        if (StartGame.getBaseController().getLoggedInPlayer().equals(startingPlayer)) {
+        if (loggedInPlayer.equals(startingPlayer)) {
             playerChar = '2';
         }
         int lblX = label.getX();
         int lblY = label.getY();
-        System.out.println("label Clicked: " + lblX + "," + lblY);
 
-        if (othello.isLegitMove(lblX, lblY, playerChar)) {
-            //replace the old label with a stone
-            CustomLabel newLabel = this.makeLabel(lblX, lblY, StartGame.getBaseController().getLoggedInPlayer());
-            gridPane.getChildren().remove(label);
-            gridPane.add(newLabel, lblX, lblY);
-
-            //update othello
-            ArrayList<Integer[]> toSwap = othello.doTurn(lblX, lblY, playerChar);
-            for (Integer[] coords : toSwap) {
-                this.swap(coords, StartGame.getBaseController().getLoggedInPlayer());
-            }
-
-            // send moveRequest to the server
-            int pos = lblX * BOARDSIZE + lblY;
-            Request moveRequest = new MoveRequest(StartGame.getConn(), pos);
-            try {
-                moveRequest.execute();
-                isOurTurn = false;
-                Platform.runLater(() -> gridPane.setStyle(theirTurnGridStyle));
-            } catch (IOException | InterruptedException e) {
-                e.printStackTrace();
-            }
-        } else {
-            //Show notification that the move is incorrect
+        // Update gameLogic models:
+        if (!othello.isLegitMove(lblX, lblY, playerChar)) {
+            DialogInterface errDialog = new ErrorDialog("This is not a correct move", "Please choose a legitimate move.");
+            errDialog.display();
+            return;
         }
-    }
+        othello.doTurn(lblX, lblY, playerChar);
 
-    private synchronized void swap(Integer[] coords, String player) {
-        ObservableList<Node> childrenList = gridPane.getChildren();
+        // Update GUI:
+        MoveUpdateTask moveUpdateTask = new MoveUpdateTask(lblX, lblY, loggedInPlayer);
+        new Thread(moveUpdateTask).start();
 
-        for (Node label : childrenList) {
-            if (gridPane.getRowIndex(label).equals(coords[1]) && gridPane.getColumnIndex(label).equals(coords[0])) {
-                Platform.runLater(() -> gridPane.getChildren().remove(label));
-            }
-            Platform.runLater(() -> gridPane.add(makeLabel(coords[0], coords[1], player), coords[0], coords[1]));
+        // Update GameServer (send Request):
+        int pos = lblX * BOARDSIZE + lblY;
+        Request moveRequest = new MoveRequest(StartGame.getConn(), pos);
+        try {
+            moveRequest.execute();
+
+            // Definitively close off our turn:
+            Platform.runLater(() -> gridPane.setStyle(theirTurnGridStyle));
+            isOurTurn = false;
+        } catch (IOException | InterruptedException e) {
+            DialogInterface errDialog = new ErrorDialog("Connection error: could not send move", "There was a problem with the server.\nPlease try restarting.");
+            errDialog.display();
         }
     }
 
     public void setOurTurn() {
         isOurTurn = true;
         Platform.runLater(() -> gridPane.setStyle(ourTurnGridStyle));
+    }
+
+    /**
+     * This class is to make all gui updates corresponding to a moveEvent from either the game, or the network.
+     * A prerequisite is that the gameLogic(Othello) model has been updated first.
+     */
+    private class MoveUpdateTask extends Task<Void> {
+        private final int x;
+        private final int y;
+        private final String playerName;
+
+        public MoveUpdateTask(int x, int y, String playerName) {
+            this.x = x;
+            this.y = y;
+            this.playerName = playerName;
+        }
+
+        @Override
+        public Void call() {
+            // loop through the gridPane nodes and replace the empty spot of the move:
+            ObservableList<Node> childrenList = gridPane.getChildren();
+            for (Node node : childrenList) {
+                if (gridPane.getColumnIndex(node) == x && gridPane.getRowIndex(node) == y
+                        && node instanceof CustomLabel) {
+                    // swap this node with the newLabel
+                    CustomLabel throwaway = makeLabel(x, y, playerName);
+                    Platform.runLater(() -> ((CustomLabel) node).setGraphic(throwaway.getGraphic()));
+                    break;
+                }
+            }
+
+            // now start consuming the other stones that need to be swapped from the gameLogic
+            // we should consume until we reach the bottom of the stack(null), to avoid more childrenList loops
+            ArrayList<Othello.Coords> swappables = new ArrayList<>(7);
+            Othello.Coords coords;
+            while ((coords = othello.consumeSwappable()) != null) {
+                swappables.add(coords);
+            }
+
+            // loop through the childrenList once more and update all swappable positions
+            for (Node node : childrenList) {
+                for (Othello.Coords swappable : swappables) {
+                    if (gridPane.getColumnIndex(node) == swappable.x && gridPane.getRowIndex(node) == swappable.y
+                            && node instanceof CustomLabel) {
+                        // swap this node with the newLabel
+                        CustomLabel throwaway = makeLabel(x, y, playerName);
+                        Platform.runLater(() -> ((CustomLabel) node).setGraphic(throwaway.getGraphic()));
+                    }
+                }
+            }
+            return null;
+        }
+
     }
 }
