@@ -34,10 +34,9 @@ public class Othello implements GameLogicInterface {
         System.out.println(Arrays.deepToString(this.board));
     }
 
-    public boolean isLegitMove(int y, int x, char player) {
-        ArrayList<Integer[]> canSetMove = this.doTurn(y, x, player);
-        System.out.println(canSetMove.toString());
-        this.board[y][x] = 0;
+    public boolean isLegitMove(int x, int y, char player) {
+        ArrayList<Integer[]> canSetMove = this.doTurn(x, y, player);
+        this.board[x][y] = 0;
 
         if (canSetMove.size() > 0) {
             for (Integer[] coords : canSetMove) {
@@ -53,19 +52,20 @@ public class Othello implements GameLogicInterface {
     /**
      * source: http://stackoverflow.com/questions/20420065/loop-diagonally-through-two-dimensional-array#answer-20422854
      */
-    public ArrayList<Integer[]> doTurn(int y, int x, char player) {
-        System.out.println("doTurn pos: " + y + "," + x);
+    public ArrayList<Integer[]> doTurn(int x, int y, char player) {
 
-        this.board[y][x] = player;
+        this.board[x][y] = player;
 
         int[] neighborsY = {-1, 0, 1, -1, 1, -1, 0, 1};
         int[] neighborsX = {-1, -1, -1, 0, 0, 1, 1, 1};
         ArrayList<Integer[]> toTurn = new ArrayList<>();
 
         for (int i = 0; i < neighborsX.length; i++) {
-            ArrayList<Integer[]> flips = checkNeighbors(new ArrayList<>(), neighborsY[i], neighborsX[i], y, x, player);
+            ArrayList<Integer[]> flips = checkNeighbors(new ArrayList<>(), neighborsX[i], neighborsY[i], x, y, player);
             if (flips != null && flips.size() > 0) {
-                System.out.println("Flips found: " + flips.get(0));
+//                for (Integer[] flip : flips) {
+//                    System.out.println("flip found: 0:" + flip[0] + ", 1:" + flip[1]);
+//                }
                 toTurn.addAll(flips);
             }
         }
@@ -77,33 +77,33 @@ public class Othello implements GameLogicInterface {
         return toTurn;
     }
 
-    private ArrayList<Integer[]> checkNeighbors(ArrayList<Integer[]> toTurn, int directionY, int directionX, int currentY, int currentX, char player) {
+    private ArrayList<Integer[]> checkNeighbors(ArrayList<Integer[]> toTurn, int directionX, int directionY, int currentX, int currentY, char player) {
 
-        int newY = currentY + directionY;
         int newX = currentX + directionX;
+        int newY = currentY + directionY;
 
-        if (!this.isInBound(newY, newX)) {
-            System.out.println("1 not in bounds");
+        if (!this.isInBound(newX, newY)) {
+//            System.out.println("1 not in bounds");
             return null;
         }
 
-        if (this.board[newY][newX] == 0) {
-            System.out.println("2 empty tile y: " + newY + ", x: " + newX);
+        if (this.board[newX][newY] == 0) {
+//            System.out.println("2 empty tile x: " + newX + ", y: " + newY);
             return null;
         }
 
-        if (this.board[newY][newX] == player) {
-            System.out.println("3 player tile found");
+        if (this.board[newX][newY] == player) {
+//            System.out.println("3 player tile found");
             return toTurn;
         }
 
-        toTurn.add(new Integer[]{newY, newX});
-        System.out.println("0 flippable added, continue down the rabbit hole y: " + newY + ", x: " + newX);
-        return checkNeighbors(toTurn, directionY, directionX, newY, newX, player);
+        toTurn.add(new Integer[]{newX, newY});
+//        System.out.println("0 flippable added, continue down the rabbit hole x: " + newX + ", y: " + newY);
+        return checkNeighbors(toTurn, directionX, directionY, newX, newY, player);
 
     }
 
-    private boolean isInBound(int currentY, int currentX) {
+    private boolean isInBound(int currentX, int currentY) {
         try {
             char c = this.board[currentY][currentX];
         } catch (IndexOutOfBoundsException e) {

@@ -5,7 +5,6 @@ import Framework.Config;
 import Framework.Dialogs.DialogInterface;
 import Framework.Dialogs.ErrorDialog;
 import Framework.GUI.Board;
-import Framework.Game.GameLogicInterface;
 import Framework.Networking.Request.MoveRequest;
 import Framework.Networking.Request.Request;
 import Game.Models.AI;
@@ -20,9 +19,8 @@ import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.input.MouseEvent;
 
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -77,8 +75,8 @@ public class BoardController extends Board {
     public Map<Integer, int[]> getListOfCoordinates() {
         Map<Integer, int[]> listOfCoordinates = new HashMap<>();
         int key = 0;
-        for (int y = 0; y < BOARDSIZE; y++) {
-            for (int x = 0; x < BOARDSIZE; x++) {
+        for (int x = 0; x < BOARDSIZE; x++) {
+            for (int y = 0; y < BOARDSIZE; y++) {
                 listOfCoordinates.put(key, new int[]{x, y});
                 key++;
             }
@@ -92,13 +90,14 @@ public class BoardController extends Board {
 
     public synchronized void setMove(int x, int y, String player) {
         // model updaten
-        char playerChar = '1';
+        char playerChar = '1'; // 1: white
         if (player.equals(startingPlayer)) {
-            playerChar = '2';
+            playerChar = '2'; // 2: black
         }
-        ArrayList<Integer[]> toSwap = othello.doTurn(y, x, playerChar); // @TODO maybe switch x and y
 
-        CustomLabel newLabel = makeLabel(y, x, player);
+        ArrayList<Integer[]> toSwap = othello.doTurn(x, y, playerChar); // @TODO maybe switch x and y
+
+        CustomLabel newLabel = makeLabel(x, y, player);
         ObservableList<Node> childrenList = gridPane.getChildren();
         for (Node node : childrenList) {
             if (gridPane.getRowIndex(node) == y && gridPane.getColumnIndex(node) == x) {
@@ -109,6 +108,7 @@ public class BoardController extends Board {
         // gridPane updaten with move
         Platform.runLater(() -> gridPane.add(newLabel, x, y));
 
+        // @TODO: make a task to swap all the stones, gui updates need optimisation
         try {
             Thread.sleep(10);
         } catch (InterruptedException e) {
@@ -121,25 +121,29 @@ public class BoardController extends Board {
 
     private void loadGrid() {
         // y = row, x = column
-        for (int y = 0; y < BOARDSIZE; y++) {
-            for (int x = 0; x < BOARDSIZE; x++) {
+        for (int x = 0; x < BOARDSIZE; x++) {
+            for (int y = 0; y < BOARDSIZE; y++) {
                 Image image = new Image(BoardController.class.getClassLoader().getResourceAsStream("Empty.png"));
                 Image blackImage = new Image(BoardController.class.getClassLoader().getResourceAsStream("Black.png"));
                 Image whiteImage = new Image(BoardController.class.getClassLoader().getResourceAsStream("White.png"));
                 ImageView imageView = new ImageView();
                 imageView.setFitHeight(cellHeight - 5);
                 imageView.setFitWidth(cellWidth - 5);
-                if (y == 3 && x == 3 || y == 4 && x == 4) {
+
+                if (x == 3 && y == 3 || x == 4 && y == 4) {
                     imageView.setImage(whiteImage);
-                } else if (y == 3 && x == 4 || y == 4 && x == 3) {
+                } else if (x == 3 && y == 4 || x == 4 && y == 3) {
                     imageView.setImage(blackImage);
                 } else {
                     imageView.setImage(image);
                 }
+
                 CustomLabel label = new CustomLabel();
                 label.setPrefSize(cellWidth, cellHeight);
-                label.setY(x);
-                label.setX(y);
+
+                label.setX(x);
+                label.setY(y);
+
                 label.setOnMouseClicked(this::clickToDoMove);
                 gridPane.setHalignment(label, HPos.CENTER);
                 label.setStyle(gridCellStyle);
@@ -187,21 +191,24 @@ public class BoardController extends Board {
         if (StartGame.getBaseController().getLoggedInPlayer().equals(startingPlayer)) {
             playerChar = '2';
         }
+        int lblX = label.getX();
+        int lblY = label.getY();
+        System.out.println("label Clicked: " + lblX + "," + lblY);
 
-        if (this.othello.isLegitMove(label.getY(), label.getX(), playerChar)) {
-            System.out.println("Uep");
+        if (othello.isLegitMove(lblX, lblY, playerChar)) {
             //replace the old label with a stone
-            CustomLabel newLabel = this.makeLabel(label.getX(), label.getY(), StartGame.getBaseController().getLoggedInPlayer());
+            CustomLabel newLabel = this.makeLabel(lblX, lblY, StartGame.getBaseController().getLoggedInPlayer());
             gridPane.getChildren().remove(label);
-            gridPane.add(newLabel, label.getY(), label.getX());
+            gridPane.add(newLabel, lblX, lblY);
 
             //update othello
-            ArrayList<Integer[]> toSwap = othello.doTurn(label.getY(), label.getX(), playerChar);
+            ArrayList<Integer[]> toSwap = othello.doTurn(lblX, lblY, playerChar);
             for (Integer[] coords : toSwap) {
                 this.swap(coords, StartGame.getBaseController().getLoggedInPlayer());
             }
+
             // send moveRequest to the server
-            int pos = label.getY() * BOARDSIZE + label.getX();
+            int pos = lblX * BOARDSIZE + lblY;
             Request moveRequest = new MoveRequest(StartGame.getConn(), pos);
             try {
                 moveRequest.execute();
@@ -222,7 +229,7 @@ public class BoardController extends Board {
             if (gridPane.getRowIndex(label).equals(coords[1]) && gridPane.getColumnIndex(label).equals(coords[0])) {
                 Platform.runLater(() -> gridPane.getChildren().remove(label));
             }
-            Platform.runLater(() -> gridPane.add(makeLabel(coords[1], coords[0], player), coords[0], coords[1]));
+            Platform.runLater(() -> gridPane.add(makeLabel(coords[0], coords[1], player), coords[0], coords[1]));
         }
     }
 

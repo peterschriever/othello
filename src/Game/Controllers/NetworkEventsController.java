@@ -72,11 +72,12 @@ public class NetworkEventsController implements NetworkEvents {
         BoardController boardController = StartGame.getBaseController().getBoardController();
         int[] coordinates = boardController.getListOfCoordinates().get(position);
 
-        int y = coordinates[0];
-        int x = coordinates[1];
+        int x = coordinates[0];
+        int y = coordinates[1];
+        System.out.println("received move: " + x + "," + y);
 
         // update view via BoardController
-        boardController.setMove(x, y, player); // @TODO: update gameLogic
+        boardController.setMove(x, y, player);
     }
 
     @Override
