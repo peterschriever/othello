@@ -44,7 +44,7 @@ public class BoardController extends Board {
     private static final String ourTurnGridStyle = "-fx-border-color: green;-fx-border-width:3;-fx-padding: 10 10 10 10;-fx-border-insets: 10 10 10 10;";
     private static final String theirTurnGridStyle = "-fx-border-color: red;-fx-border-width:3;-fx-padding: 10 10 10 10;-fx-border-insets: 10 10 10 10;";
 
-    private boolean isOurTurn = false;
+    private Boolean isOurTurn = false;
 
     public void initialize() {
         othello = new Othello();
@@ -207,11 +207,13 @@ public class BoardController extends Board {
         int pos = lblX * BOARDSIZE + lblY;
         Request moveRequest = new MoveRequest(StartGame.getConn(), pos);
         try {
-            moveRequest.execute();
-
             // Definitively close off our turn:
             Platform.runLater(() -> gridPane.setStyle(theirTurnGridStyle));
-            isOurTurn = false;
+            synchronized (isOurTurn) {
+                isOurTurn = false;
+            }
+
+            moveRequest.execute();
         } catch (IOException | InterruptedException e) {
             DialogInterface errDialog = new ErrorDialog("Connection error: could not send move", "There was a problem with the server.\nPlease try restarting.");
             errDialog.display();
@@ -219,7 +221,9 @@ public class BoardController extends Board {
     }
 
     public void setOurTurn() {
-        isOurTurn = true;
+        synchronized (isOurTurn) {
+            isOurTurn = true;
+        }
         Platform.runLater(() -> gridPane.setStyle(ourTurnGridStyle));
     }
 
