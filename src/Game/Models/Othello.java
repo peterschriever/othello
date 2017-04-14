@@ -59,6 +59,10 @@ public class Othello implements GameLogicInterface {
      * source: http://stackoverflow.com/questions/20420065/loop-diagonally-through-two-dimensional-array#answer-20422854
      */
     private boolean doTurn(int x, int y, char player, boolean saveSwaps) {
+        if (this.board[x][y] != 0) {
+            return false;
+        }
+
         if (saveSwaps) {
             this.board[x][y] = player;
         }
