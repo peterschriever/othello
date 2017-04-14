@@ -49,7 +49,7 @@ public class BoardController extends Board {
     public void initialize() {
         othello = new Othello();
         try {
-            ai = new AI(othello, Config.get("game", "useCharacterForOpponent").charAt(0));
+            ai = new AI(othello.getBoard(), Config.get("game", "useCharacterForPlayer").charAt(0));
         } catch (IOException e) {
             DialogInterface errDialog = new ErrorDialog("Config error", "Could not load property: useCharacterForPlayer." +
                     "\nPlease check your game.properties file.");
