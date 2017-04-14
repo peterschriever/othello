@@ -74,7 +74,6 @@ public class NetworkEventsController implements NetworkEvents {
 
         int x = coordinates[0];
         int y = coordinates[1];
-        System.out.println("received move: " + x + "," + y);
 
         // update view via BoardController
         boardController.setMove(x, y, player);

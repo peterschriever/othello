@@ -89,14 +89,14 @@ public class BoardController extends Board {
         Platform.runLater(() -> gridPane.setStyle(preGameGridStyle));
     }
 
-    public synchronized void setMove(int x, int y, String player) {
+    public void setMove(int x, int y, String player) {
         // Update gameLogic models:
         char playerChar = '1'; // 1: white
         if (player.equals(startingPlayer)) {
             playerChar = '2'; // 2: black
         }
 
-        othello.doTurn(x, y, playerChar); // swaps are place on Stack
+        othello.doTurn(x, y, playerChar); // swaps are placed on Stack
 
         // Update GUI:
         MoveUpdateTask moveUpdateTask = new MoveUpdateTask(x, y, player);
@@ -187,6 +187,7 @@ public class BoardController extends Board {
         if (loggedInPlayer.equals(startingPlayer)) {
             playerChar = '2';
         }
+
         int lblX = label.getX();
         int lblY = label.getY();
 

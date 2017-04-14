@@ -38,8 +38,6 @@ public class Othello implements GameLogicInterface {
 
         this.board[3][4] = '2';
         this.board[4][3] = '2';
-
-        this.showBoard();
     }
 
     public void showBoard() {
@@ -78,7 +76,7 @@ public class Othello implements GameLogicInterface {
                     0
             );
 
-            if (flips != null) {
+            if (flips != null && flips[0] != null) {
                 result = true;
 
                 if (!saveSwaps) {
@@ -92,7 +90,7 @@ public class Othello implements GameLogicInterface {
                     this.toBeSwapped.push(flip);
 
                     // @TODO: decide whether to adjust internal board here or at consumption of stack
-                    this.board[flip.x][flip.y] = switchPlayer(player);
+                    this.board[flip.x][flip.y] = player;
                 }
             }
         }
