@@ -53,9 +53,11 @@ public class NetworkEventsController implements NetworkEvents {
         //Disable the controls
         StartGame.getBaseController().getControlsController().disableControls();
 
-        StartGame.getBaseController().getBoardController().othello.reset();
+        StartGame.getBaseController().getBoardController().setStartingPlayer(response.getStartingPlayer());
+        StartGame.getBaseController().getBoardController().othello = new Othello();
+        StartGame.getBaseController().getBoardController().resetAI();
 
-        StartGame.getBaseController().getBoardController().startingPlayer = response.getStartingPlayer();
+
     }
 
     @Override

@@ -101,7 +101,9 @@ public class Othello implements GameLogicInterface, Cloneable {
 
         if (saveSwaps) {
             board.set(x, y, player);
-            if (undo) undoableSwaps.push(new Coords(x, y, player, '\0'));
+            if (undo) {
+                undoableSwaps.push(new Coords(x, y, player, '\0'));
+            }
         }
 
         int[] neighborsY = {-1, 0, 1, -1, 1, -1, 0, 1};
@@ -134,7 +136,9 @@ public class Othello implements GameLogicInterface, Cloneable {
 
                     // update board with flip
                     board.set(flip, player);
-                    if (undo) undoableSwaps.push(new Coords(flip.x, flip.y, player, switchPlayer(player)));
+                    if (undo) {
+                        undoableSwaps.push(new Coords(flip.x, flip.y, player, switchPlayer(player)));
+                    }
                 }
             }
         }

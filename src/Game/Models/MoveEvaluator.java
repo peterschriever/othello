@@ -49,7 +49,7 @@ public class MoveEvaluator {
             return bestMove;
         } else {
             Random r = new Random();
-            System.out.println("bound positive?: " + moves.size());
+            System.out.println("RAND: bound positive?: " + moves.size());
             return moves.get(r.nextInt(moves.size()));
         }
     }

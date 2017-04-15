@@ -29,7 +29,7 @@ import java.util.Map;
  */
 public class BoardController extends Board {
     private AI bot = null; // bot instance is made when required (in getter)
-    public final Othello othello = new Othello();
+    public Othello othello;
     public String startingPlayer;
     private static final int BOARDSIZE = 8;
     private static double cellWidth;
@@ -95,18 +95,19 @@ public class BoardController extends Board {
         if (player.equals(startingPlayer)) {
             playerChar = '2'; // 2: black
         }
-        // @TODO: bug in doAITurn, originele gameLogic wordt geupdated als clone wordt geedit
-        othello.showBoard();
-//        System.out.println("SETMOVE x:" + x + ", y:" + y+", player: "+playerChar+"  --------------");
+
         othello.doTurn(x, y, playerChar); // swaps are placed on Stack
 
         // Update GUI:
         MoveUpdateTask moveUpdateTask = new MoveUpdateTask(x, y, player);
-        new Thread(moveUpdateTask).start();
+        Thread updateThread = new Thread(moveUpdateTask);
+        updateThread.start();
 
-        // HACK: sleep 100ms to give the GUI time to update the last move (AI flickers sends moves too fast?)
+        // HACK: sleep to give the GUI time to update the last move (AI flickers sends moves too fast?)
         try {
-            Thread.sleep(100);
+            while(updateThread.isAlive()) {
+                Thread.sleep(100);
+            }
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
@@ -242,6 +243,7 @@ public class BoardController extends Board {
         try {
             // setMove updates gameLogic and GUI
             setMove(moveCoords.x, moveCoords.y, StartGame.getBaseController().getLoggedInPlayer());
+            othello.showBoard();
 
             // send moveRequest to game server
             int pos = moveCoords.x * BOARDSIZE + moveCoords.y;
@@ -258,6 +260,15 @@ public class BoardController extends Board {
             DialogInterface errDialog = new ErrorDialog("InterruptedException|IOException", "Could not send request: moveRequest.");
             Platform.runLater(errDialog::display);
         }
+    }
+
+    public void setStartingPlayer(String startingPlayer) {
+        this.startingPlayer = null;
+        this.startingPlayer = startingPlayer;
+    }
+
+    public void resetAI() {
+        this.bot = null;
     }
 
     /**
@@ -278,18 +289,6 @@ public class BoardController extends Board {
 
         @Override
         public Void call() {
-            // loop through the gridPane nodes and replace the empty spot of the move:
-            ObservableList<Node> childrenList = gridPane.getChildren();
-            for (Node node : childrenList) {
-                if (gridPane.getColumnIndex(node) == x && gridPane.getRowIndex(node) == y
-                        && node instanceof CustomLabel) {
-                    // swap this node with the newLabel
-                    CustomLabel throwaway = makeLabel(x, y, playerName);
-                    Platform.runLater(() -> ((CustomLabel) node).setGraphic(throwaway.getGraphic()));
-                    break;
-                }
-            }
-
             // now start consuming the other stones that need to be swapped from the gameLogic
             // we should consume until we reach the bottom of the stack(null), to avoid more childrenList loops
             ArrayList<Othello.Coords> swappables = new ArrayList<>(7);
@@ -297,16 +296,29 @@ public class BoardController extends Board {
             while ((coords = othello.consumeSwappable()) != null) {
                 swappables.add(coords);
             }
-            System.out.println("SWAPPABLES: " + swappables.size());
+//            System.out.println("SWAPPABLES: " + swappables.size());
 
-            // loop through the childrenList once more and update all swappable positions
+            // loop through the gridPane nodes and replace the empty spot of the move:
+            ObservableList<Node> childrenList = gridPane.getChildren();
             for (Node node : childrenList) {
+                if (gridPane.getColumnIndex(node) == x && gridPane.getRowIndex(node) == y
+                        && node instanceof CustomLabel) {
+                    // swap this node with the newLabel
+                    Platform.runLater(() -> {
+                        CustomLabel throwaway = makeLabel(x, y, playerName);
+                        ((CustomLabel) node).setGraphic(throwaway.getGraphic());
+                    });
+                    continue;
+                }
+
                 for (Othello.Coords swappable : swappables) {
                     if (gridPane.getColumnIndex(node) == swappable.x && gridPane.getRowIndex(node) == swappable.y
                             && node instanceof CustomLabel) {
                         // swap this node with the newLabel
-                        CustomLabel throwaway = makeLabel(x, y, playerName);
-                        Platform.runLater(() -> ((CustomLabel) node).setGraphic(throwaway.getGraphic()));
+                        Platform.runLater(() -> {
+                            CustomLabel throwaway = makeLabel(x, y, playerName);
+                            ((CustomLabel) node).setGraphic(throwaway.getGraphic());
+                        });
                     }
                 }
             }
