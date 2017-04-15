@@ -1,7 +1,5 @@
 package Game.Controllers;
 
-import Framework.AI.BotInterface;
-import Framework.Config;
 import Framework.Dialogs.DialogInterface;
 import Framework.Dialogs.ErrorDialog;
 import Framework.GUI.Board;
@@ -29,10 +27,9 @@ import java.util.Map;
  * Created by peterzen on 2017-04-12.
  * Part of the othello project.
  */
-// @TODO: idea; make stack of similar Platform.runLater items and run them in a Task, or single Platform.runLater call
 public class BoardController extends Board {
-    private BotInterface ai;
-    public Othello othello;
+    private AI bot = null; // bot instance is made when required (in getter)
+    public final Othello othello = new Othello();
     public String startingPlayer;
     private static final int BOARDSIZE = 8;
     private static double cellWidth;
@@ -47,25 +44,28 @@ public class BoardController extends Board {
     private Boolean isOurTurn = false;
 
     public void initialize() {
-        othello = new Othello();
-        try {
-            ai = new AI(othello.getBoard(), Config.get("game", "useCharacterForPlayer").charAt(0));
-        } catch (IOException e) {
-            DialogInterface errDialog = new ErrorDialog("Config error", "Could not load property: useCharacterForPlayer." +
-                    "\nPlease check your game.properties file.");
-            errDialog.display();
-        }
-
         cellWidth = (gridPane.getPrefWidth() / BOARDSIZE) - 2;
         cellHeight = (gridPane.getPrefWidth() / BOARDSIZE) - 2;
         drawGrid(BOARDSIZE);
         loadGrid();
-
-        othello.showBoard();
     }
 
-    public BotInterface getAI() {
-        return ai;
+    public AI getAI() {
+        if (bot == null) {
+            char maxi;
+            char mini;
+            if (StartGame.getBaseController().getLoggedInPlayer().equals(startingPlayer)) {
+                maxi = '2';
+                mini = '1';
+            } else {
+                maxi = '1';
+                mini = '2';
+            }
+
+            bot = new AI(maxi, mini);
+        }
+
+        return bot;
     }
 
     public Othello getGameLogic() {
@@ -95,12 +95,21 @@ public class BoardController extends Board {
         if (player.equals(startingPlayer)) {
             playerChar = '2'; // 2: black
         }
-
+        // @TODO: bug in doAITurn, originele gameLogic wordt geupdated als clone wordt geedit
+        othello.showBoard();
+//        System.out.println("SETMOVE x:" + x + ", y:" + y+", player: "+playerChar+"  --------------");
         othello.doTurn(x, y, playerChar); // swaps are placed on Stack
 
         // Update GUI:
         MoveUpdateTask moveUpdateTask = new MoveUpdateTask(x, y, player);
         new Thread(moveUpdateTask).start();
+
+        // HACK: sleep 100ms to give the GUI time to update the last move (AI flickers sends moves too fast?)
+        try {
+            Thread.sleep(100);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
     }
 
     private void loadGrid() {
@@ -227,6 +236,30 @@ public class BoardController extends Board {
         Platform.runLater(() -> gridPane.setStyle(ourTurnGridStyle));
     }
 
+    public void doAITurn() {
+        othello.showBoard();
+        Othello.Coords moveCoords = getAI().doTurn(othello);
+        try {
+            // setMove updates gameLogic and GUI
+            setMove(moveCoords.x, moveCoords.y, StartGame.getBaseController().getLoggedInPlayer());
+
+            // send moveRequest to game server
+            int pos = moveCoords.x * BOARDSIZE + moveCoords.y;
+            System.out.println("AI MOVE GEN: " + moveCoords.x + "," + moveCoords.y + " == " + pos);
+            Request moveRequest = new MoveRequest(StartGame.getConn(), pos);
+            moveRequest.execute();
+
+            // set isOurTurn false
+            synchronized (isOurTurn) {
+                isOurTurn = false;
+            }
+            Platform.runLater(() -> gridPane.setStyle(theirTurnGridStyle));
+        } catch (InterruptedException | IOException e) {
+            DialogInterface errDialog = new ErrorDialog("InterruptedException|IOException", "Could not send request: moveRequest.");
+            Platform.runLater(errDialog::display);
+        }
+    }
+
     /**
      * This class is to make all gui updates corresponding to a moveEvent from either the game, or the network.
      * A prerequisite is that the gameLogic(Othello) model has been updated first.
@@ -240,6 +273,7 @@ public class BoardController extends Board {
             this.x = x;
             this.y = y;
             this.playerName = playerName;
+            System.out.println("MOVEUPDATETASK START player: " + playerName);
         }
 
         @Override
@@ -263,6 +297,7 @@ public class BoardController extends Board {
             while ((coords = othello.consumeSwappable()) != null) {
                 swappables.add(coords);
             }
+            System.out.println("SWAPPABLES: " + swappables.size());
 
             // loop through the childrenList once more and update all swappable positions
             for (Node node : childrenList) {
@@ -275,6 +310,7 @@ public class BoardController extends Board {
                     }
                 }
             }
+            System.out.println("MOVEUPDATETASK END player: " + playerName);
             return null;
         }
 

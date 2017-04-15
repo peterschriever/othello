@@ -40,6 +40,7 @@ public class BaseController extends Base {
         } catch (IOException e) {
             ErrorDialog errorDialog = new ErrorDialog("IOException: could not load from game.properties", "Please contact a project developer.");
             Platform.runLater(errorDialog::display);
+            e.printStackTrace();
         }
     }
 

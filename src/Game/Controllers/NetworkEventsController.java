@@ -53,7 +53,7 @@ public class NetworkEventsController implements NetworkEvents {
         //Disable the controls
         StartGame.getBaseController().getControlsController().disableControls();
 
-        StartGame.getBaseController().getBoardController().othello = new Othello();
+        StartGame.getBaseController().getBoardController().othello.reset();
 
         StartGame.getBaseController().getBoardController().startingPlayer = response.getStartingPlayer();
     }
@@ -86,7 +86,7 @@ public class NetworkEventsController implements NetworkEvents {
 
         // let the AI generate a move if needed
         if (StartGame.getBaseController().getControlsController().isBotPlaying()) {
-//            StartGame.getBaseController().getBoardController().doAIMove(); @TODO: need AI
+            StartGame.getBaseController().getBoardController().doAITurn();
         }
     }
 
