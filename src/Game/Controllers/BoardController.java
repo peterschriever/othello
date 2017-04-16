@@ -238,16 +238,14 @@ public class BoardController extends Board {
     }
 
     public void doAITurn() {
-        othello.showBoard();
         Othello.Coords moveCoords = getAI().doTurn(othello);
         try {
             // setMove updates gameLogic and GUI
             setMove(moveCoords.x, moveCoords.y, StartGame.getBaseController().getLoggedInPlayer());
-            othello.showBoard();
 
             // send moveRequest to game server
             int pos = moveCoords.x * BOARDSIZE + moveCoords.y;
-            System.out.println("AI MOVE GEN: " + moveCoords.x + "," + moveCoords.y + " == " + pos);
+//            System.out.println("AI MOVE GEN: " + moveCoords.x + "," + moveCoords.y + " == " + pos);
             Request moveRequest = new MoveRequest(StartGame.getConn(), pos);
             moveRequest.execute();
 
@@ -284,7 +282,7 @@ public class BoardController extends Board {
             this.x = x;
             this.y = y;
             this.playerName = playerName;
-            System.out.println("MOVEUPDATETASK START player: " + playerName);
+//            System.out.println("MOVEUPDATETASK START player: " + playerName);
         }
 
         @Override
@@ -322,7 +320,7 @@ public class BoardController extends Board {
                     }
                 }
             }
-            System.out.println("MOVEUPDATETASK END player: " + playerName);
+//            System.out.println("MOVEUPDATETASK END player: " + playerName);
             return null;
         }
 

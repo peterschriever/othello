@@ -20,13 +20,13 @@ public class Othello implements GameLogicInterface, Cloneable {
     private Stack<Coords> toBeSwapped;
 
     // swaps for AI:
-    private Stack<Coords> undoableSwaps;
+    private Stack<Coords[]> undoableAITurns;
 
 
     public Othello() {
         this.board = new OthelloBoard(BOARDSIZE);
         this.toBeSwapped = new Stack<>();
-        this.undoableSwaps = new Stack<>();
+        this.undoableAITurns = new Stack<>();
 
         this.initFirstState();
     }
@@ -56,14 +56,16 @@ public class Othello implements GameLogicInterface, Cloneable {
         return toBeSwapped.pop();
     }
 
-    public Coords undoAISwap() {
-        if (undoableSwaps.empty()) {
-            return null;
+    public boolean undoAITurn() {
+        if (undoableAITurns.empty()) {
+            return false;
         }
 
-        Coords move = undoableSwaps.pop();
-        board.set(move.x, move.y, move.old);
-        return move;
+        Coords[] turn = undoableAITurns.pop();
+        for (Coords move : turn) {
+            if (move != null) board.set(move.x, move.y, move.old);
+        }
+        return true;
     }
 
     private void initFirstState() {
@@ -99,10 +101,14 @@ public class Othello implements GameLogicInterface, Cloneable {
             return false;
         }
 
+        Coords[] aiTurn = new Coords[32];
+        int countAI = 0;
+
         if (saveSwaps) {
             board.set(x, y, player);
             if (undo) {
-                undoableSwaps.push(new Coords(x, y, player, '\0'));
+                aiTurn[countAI] = new Coords(x, y, player, '\0');
+                countAI++;
             }
         }
 
@@ -137,11 +143,13 @@ public class Othello implements GameLogicInterface, Cloneable {
                     // update board with flip
                     board.set(flip, player);
                     if (undo) {
-                        undoableSwaps.push(new Coords(flip.x, flip.y, player, switchPlayer(player)));
+                        aiTurn[countAI] = new Coords(flip.x, flip.y, player, switchPlayer(player));
+                        countAI++;
                     }
                 }
             }
         }
+        if (undo) undoableAITurns.push(aiTurn);
         // there were no swaps: false result, otherwise true
         return result;
     }

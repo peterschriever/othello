@@ -2,7 +2,6 @@ package Game.Models;
 
 import Framework.AI.BotInterface;
 
-import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -14,7 +13,7 @@ public class AI implements BotInterface {
     private char maximizingPlayer;
     private MoveEvaluator evaluator;
 
-    private static final int searchDepth = 20;
+    private static final int searchDepth = 2;
 
     public AI(char maximizingPlayer, char minimizingPlayer) {
         this.maximizingPlayer = maximizingPlayer;
@@ -38,10 +37,14 @@ public class AI implements BotInterface {
         }
 
         // start recursive search for best move:
+//        System.out.println("initMoves: ");
+//        initMoves.forEach((move) -> System.out.print(move.x + ", " + move.y+"|"));
+//        System.out.println();
         Othello.Coords bestMove = evaluator.findBestMove(initMoves, gameLogic);
+        System.out.println("BEST MOVE " + bestMove.x + ", " + bestMove.y);
 
         // undo all board changes
-        while (gameLogic.undoAISwap() != null) {
+        while (gameLogic.undoAITurn()) {
         }
         while (gameLogic.consumeSwappable() != null) {
         }

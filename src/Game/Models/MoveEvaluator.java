@@ -16,7 +16,6 @@ public class MoveEvaluator {
     private final char maxPlayer;
     private final char minPlayer;
     private int searchDepth;
-    private int currentDepth = 1;
     private MoveTree searchTree;
 
     private final static int[][] centerPositions = new int[][]{{3, 3}, {3, 4}, {4, 3}, {4, 4}};
@@ -38,14 +37,18 @@ public class MoveEvaluator {
 
     public Othello.Coords findBestMove(List<Othello.Coords> moves, Othello gameLogic) {
         // create a new tree
+        this.searchTree = null;
         this.searchTree = new MoveTree(gameLogic);
-
+        moves.forEach((move) -> System.out.print(move.x + "," + move.y + " | "));
+        System.out.println();
         for (int i = 0; i < moves.size(); i++) {
-            createMiniMaxTree(moves.get(i), searchTree.getRootNode(), i, searchTree.getGameLogicClone(), true);
+            createMiniMaxTree(moves.get(i), searchTree.getRootNode(), i, gameLogic, true, 1);
         }
 
+        // traverse and find bestMove
         Othello.Coords bestMove = searchTree.traverseFindBestScoringPath(true);
         if (bestMove != null) {
+            System.out.println("possible moves: " + moves.size() + ", best x:" + bestMove.x + ",y:" + bestMove.y);
             return bestMove;
         } else {
             Random r = new Random();
@@ -54,24 +57,44 @@ public class MoveEvaluator {
         }
     }
 
-    private void createMiniMaxTree(Othello.Coords move, MoveNode node, int branchIndex, Othello gameLogic, boolean isMaxing) {
+    private void createMiniMaxTree(Othello.Coords move, MoveNode parent,
+                                   int branchIndex, Othello gameLogic, boolean isMaxing, int currentDepth) {
         char player = isMaxing ? maxPlayer : minPlayer;
+        char otherPlayer = !isMaxing ? maxPlayer : minPlayer;
 
-        // apply move
-        gameLogic.doTurn(move.x, move.y, player, true, true);
+//        System.out.println("Maxing: " + isMaxing + " player:" + player);
+//        System.out.println("Current depth: " + currentDepth + ", branchIndex: " + branchIndex);
 
+        if (branchIndex >= 1) {
+            gameLogic.undoAITurn();
+        }
+        boolean applyParents = false;
+        if (currentDepth > 1) {
+            // reset D-1 times
+            for (int i = 0; i < currentDepth - 1; i++) {
+                gameLogic.undoAITurn();
+            }
+            // parent.doTurn, to reapply parent turns
+            applyParents = true;
+        }
         // create the resulting MoveNode
-        MoveNode resultNode = new MoveNode(move);
+        if (parent.getDepth() == 0) System.out.println("Adding root.nextNode: " + move.x + "," + move.y);
+        MoveNode resultNode = new MoveNode(move, currentDepth, parent);
+        currentDepth++; // which shall be placed in depth+1
+
+        // normal doTurn
+//        gameLogic.showBoard(); // startBoard
+        resultNode.doTurn(gameLogic, player, otherPlayer, applyParents);
+//        gameLogic.showBoard(); // branchBoard
 
         // evaluate the resulting board state for the current player & save this with the resultNode
         int score = simple_evaluateResultingBoard(gameLogic, move, isMaxing);
         resultNode.setMoveValue(score);
 
-        // add this resultNode to the currentNode branches
-        node.nextNodes[branchIndex] = resultNode;
+        // add this resultNode to the parentNode branches
+        parent.nextNodes[branchIndex] = resultNode;
 
-        // increment depth
-        currentDepth++;
+        // break when maxDepth is reached
         if (currentDepth >= searchDepth) {
             return;
         }
@@ -79,8 +102,10 @@ public class MoveEvaluator {
         // with the new move applied to the board and depth increased, find all new moves and do a recursive call
         isMaxing = !isMaxing; // toggle miniMax
         List<Othello.Coords> moves = gameLogic.getLegitMoves(isMaxing ? maxPlayer : minPlayer);
+
         for (int i = 0; i < moves.size(); i++) {
-            createMiniMaxTree(moves.get(i), resultNode, i, gameLogic, !isMaxing);
+            // find children/branches for the new resultNode
+            createMiniMaxTree(moves.get(i), resultNode, i, gameLogic, !isMaxing, currentDepth);
         }
     }
 
