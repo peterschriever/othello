@@ -24,16 +24,11 @@ public class MoveTree {
             if (nextNode == null) continue;
 
             score = traverseAndFindScore(nextNode, isMaxing);
-//            System.out.println("score == " + score);
             if (score > pathScore) {
-//                System.out.println("SCORE > pathScore: " + score);
                 pathScore = score;
                 bestMove = nextNode.coords;
             }
-            System.out.print(nextNode.coords.x+", "+nextNode.coords.y+" /");
         }
-        System.out.println();
-        System.out.println("PATHSCORE " + pathScore + " coords:" + bestMove);
 
         if (bestMove != null) {
             return bestMove;
@@ -56,7 +51,6 @@ public class MoveTree {
             // mini
             if (!isMaxing && (score < pathScore)) pathScore = score;
         }
-//        System.out.println("2 returning pathScore: " + pathScore + " isMaxing: " + isMaxing);
 
         return pathScore;
     }

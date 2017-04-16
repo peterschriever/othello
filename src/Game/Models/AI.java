@@ -37,11 +37,7 @@ public class AI implements BotInterface {
         }
 
         // start recursive search for best move:
-//        System.out.println("initMoves: ");
-//        initMoves.forEach((move) -> System.out.print(move.x + ", " + move.y+"|"));
-//        System.out.println();
         Othello.Coords bestMove = evaluator.findBestMove(initMoves, gameLogic);
-        System.out.println("BEST MOVE " + bestMove.x + ", " + bestMove.y);
 
         // undo all board changes
         while (gameLogic.undoAITurn()) {

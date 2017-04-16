@@ -39,8 +39,6 @@ public class MoveEvaluator {
         // create a new tree
         this.searchTree = null;
         this.searchTree = new MoveTree(gameLogic);
-        moves.forEach((move) -> System.out.print(move.x + "," + move.y + " | "));
-        System.out.println();
         for (int i = 0; i < moves.size(); i++) {
             createMiniMaxTree(moves.get(i), searchTree.getRootNode(), i, gameLogic, true, 1);
         }
@@ -48,11 +46,9 @@ public class MoveEvaluator {
         // traverse and find bestMove
         Othello.Coords bestMove = searchTree.traverseFindBestScoringPath(true);
         if (bestMove != null) {
-            System.out.println("possible moves: " + moves.size() + ", best x:" + bestMove.x + ",y:" + bestMove.y);
             return bestMove;
         } else {
             Random r = new Random();
-            System.out.println("RAND: bound positive?: " + moves.size());
             return moves.get(r.nextInt(moves.size()));
         }
     }
@@ -62,8 +58,6 @@ public class MoveEvaluator {
         char player = isMaxing ? maxPlayer : minPlayer;
         char otherPlayer = !isMaxing ? maxPlayer : minPlayer;
 
-//        System.out.println("Maxing: " + isMaxing + " player:" + player);
-//        System.out.println("Current depth: " + currentDepth + ", branchIndex: " + branchIndex);
 
         if (branchIndex >= 1) {
             gameLogic.undoAITurn();
@@ -78,14 +72,11 @@ public class MoveEvaluator {
             applyParents = true;
         }
         // create the resulting MoveNode
-        if (parent.getDepth() == 0) System.out.println("Adding root.nextNode: " + move.x + "," + move.y);
         MoveNode resultNode = new MoveNode(move, currentDepth, parent);
         currentDepth++; // which shall be placed in depth+1
 
         // normal doTurn
-//        gameLogic.showBoard(); // startBoard
         resultNode.doTurn(gameLogic, player, otherPlayer, applyParents);
-//        gameLogic.showBoard(); // branchBoard
 
         // evaluate the resulting board state for the current player & save this with the resultNode
         int score = simple_evaluateResultingBoard(gameLogic, move, isMaxing);

@@ -137,7 +137,6 @@ public class Othello implements GameLogicInterface, Cloneable {
                     if (flip == null) {
                         continue;
                     }
-//                    System.out.println("2 saving flip x:" + flip.x + ", y:" + flip.y);
                     this.toBeSwapped.push(flip);
 
                     // update board with flip
