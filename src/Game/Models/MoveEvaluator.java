@@ -79,9 +79,13 @@ public class MoveEvaluator {
         resultNode.doTurn(gameLogic, player, otherPlayer, applyParents);
 
         // evaluate the resulting board state for the current player & save this with the resultNode
-        int score = simple_evaluateResultingBoard(gameLogic, move, isMaxing);
+        int score;
+        if (!gameLogic.gameEndAndWon(player, otherPlayer)) { // @TODO: optimize; without check: 7 deep, with 6
+            score = simple_evaluateResultingBoard(gameLogic, move, isMaxing);
+        } else {
+            score = Integer.MAX_VALUE;
+        }
         resultNode.setMoveValue(score);
-
         // add this resultNode to the parentNode branches
         parent.nextNodes[branchIndex] = resultNode;
 
@@ -110,6 +114,7 @@ public class MoveEvaluator {
                 centerSwaps++;
             }
         }
+        score += centerSwaps * 15;
 
         if (moveIsInCorner(move)) {
             score += 50;
@@ -118,8 +123,6 @@ public class MoveEvaluator {
         if (moveIsInBorders(move)) {
             score += 20;
         }
-
-        score += centerSwaps * 15;
 
         return isMaxing ? score : score * -1;
     }

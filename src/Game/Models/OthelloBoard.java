@@ -65,4 +65,14 @@ public class OthelloBoard implements Cloneable {
         }
         return null;
     }
+
+    public int getPlayerScore(char player) {
+        int i = 0;
+        for (char[] chars : board) {
+            for (char tile : chars) {
+                if (tile == player) i++;
+            }
+        }
+        return i;
+    }
 }

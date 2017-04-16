@@ -173,7 +173,6 @@ public class Othello implements GameLogicInterface, Cloneable {
         count++;
 
         return checkNeighbors(toTurn, direction, new int[]{newX, newY}, player, count);
-
     }
 
     private char switchPlayer(char s) {
@@ -183,20 +182,21 @@ public class Othello implements GameLogicInterface, Cloneable {
         return '1';
     }
 
-    public OthelloBoard getOBoard() {
-        return board;
-    }
-
     @Override
     public char[][] getBoard() {
-        return new char[0][];
+        return board.getBoard();
     }
 
-    public void reset() {
-        this.board = new OthelloBoard(BOARDSIZE);
-        this.toBeSwapped = new Stack<>();
+    public boolean gameEndAndWon(char player, char opponent) {
+        return isGameOver() && board.getPlayerScore(player) > board.getPlayerScore(opponent);
 
-        this.initFirstState();
+    }
+
+    private boolean isGameOver() {
+        List<Coords> p1Moves = getLegitMoves('1');
+        List<Coords> p2Moves = getLegitMoves('2');
+
+        return p1Moves.size() == 0 && p2Moves.size() == 0;
     }
 
     public static class Coords {
