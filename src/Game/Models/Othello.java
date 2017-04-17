@@ -93,9 +93,6 @@ public class Othello implements GameLogicInterface, Cloneable {
         return doTurn(x, y, player, true, false);
     }
 
-    /**
-     * source: http://stackoverflow.com/questions/20420065/loop-diagonally-through-two-dimensional-array#answer-20422854
-     */
     public boolean doTurn(int x, int y, char player, boolean saveSwaps, boolean undo) {
         if (board.get(x, y) != 0) {
             return false;
