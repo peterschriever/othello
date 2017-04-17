@@ -47,16 +47,70 @@ public class MoveEvaluator {
         for (int i = 0; i < moves.size(); i++) {
             createMiniMaxTree(moves.get(i), searchTree.getRootNode(), i, gameLogic, false, 1);
         }
-        evaluateMiniMaxTree(searchTree.getRootNode(), 0, gameLogic);
+
+        // Moves are loaded into a tree: now traverse and evaluate the best one, starting from the rootNode
+        Othello.Coords bestMove = DFS_minimaxValueOf(searchTree.getRootNode(), gameLogic);
 
         // traverse and find bestMove
-        Othello.Coords bestMove = searchTree.traverseFindBestScoringPath(true);
+//        Othello.Coords bestMove = searchTree.traverseFindBestScoringPath(true);
         if (bestMove != null) {
             return bestMove;
         } else {
             Random r = new Random();
             return moves.get(r.nextInt(moves.size()));
         }
+    }
+
+    private Othello.Coords DFS_minimaxValueOf(MoveNode node, Othello gameLogic) {
+        int score;
+        int bestScore = Integer.MIN_VALUE;
+        Othello.Coords bestMove = null;
+        for (MoveNode nextNode : node.nextNodes) {
+            if (nextNode == null) continue;
+            score = DFS_maximumValueOf(nextNode, gameLogic);
+//            System.out.println("score: " + score);
+            if (score > bestScore) {
+                bestMove = nextNode.coords;
+                bestScore = score;
+                System.out.println("Considering bestScoring: " + bestScore + ", move:" + bestMove.x + ", " + bestMove.y);
+            }
+        }
+
+        return bestMove;
+    }
+
+    private int DFS_maximumValueOf(MoveNode node, Othello gameLogic) {
+        if (node.isLeaf) {
+            evaluateLeafScore(node, gameLogic, maxPlayer, minPlayer);
+            return node.value;
+        }
+
+        int score;
+        int bestScore = 0;
+        for (MoveNode nextNode : node.nextNodes) {
+            if (nextNode == null) continue;
+            score = DFS_minimumValueOf(nextNode, gameLogic);
+            if (score < bestScore) bestScore = score;
+        }
+
+        return bestScore;
+    }
+
+    private int DFS_minimumValueOf(MoveNode node, Othello gameLogic) {
+        if (node.isLeaf) {
+            evaluateLeafScore(node, gameLogic, minPlayer, maxPlayer);
+            return node.value;
+        }
+
+        int score;
+        int bestScore = 0;
+        for (MoveNode nextNode : node.nextNodes) {
+            if (nextNode == null) continue;
+            score = DFS_maximumValueOf(nextNode, gameLogic);
+            if (score > bestScore) bestScore = score;
+        }
+
+        return bestScore;
     }
 
     // @TODO: check if traversal is in the right order (DFS vs post order vs other?)
@@ -151,12 +205,14 @@ public class MoveEvaluator {
 
     private void evaluateLeafScore(MoveNode node, Othello gameLogic, char player, char otherPlayer) {
         node.doTurn(gameLogic, player, otherPlayer, true);
-        int score;
+        int score = 0;
         if (!gameLogic.gameEndAndWon(player, otherPlayer)) { // @TODO: optimize; without check: 7 deep, with 6
             score = simple_evaluateResultingBoard(gameLogic, node.getMoves(), player);
         } else {
-            score = Integer.MAX_VALUE;
+            if (player == maxPlayer) score = Integer.MAX_VALUE;
+            if (player == minPlayer) score = Integer.MIN_VALUE;
         }
+//        if (score != 0) System.out.println("calc score: " + score);
         node.value = score;
     }
 
@@ -187,25 +243,27 @@ public class MoveEvaluator {
         int negCenterSwaps = 0;
         Othello.Coords swap;
         while ((swap = gameLogic.consumeSwappable()) != null) {
-            if (swap.player == player) {
+            if (swap.player == maxPlayer) {
                 score++; // 1pt per swap
                 if (isCenterSwap(swap)) {
                     centerSwaps++;
                 }
                 continue;
             }
-            negScore++;
-            if (isCenterSwap(swap)) {
-                negCenterSwaps++;
+            if (swap.player == minPlayer) {
+                negScore++;
+                if (isCenterSwap(swap)) {
+                    negCenterSwaps++;
+                }
             }
         }
-        score += centerSwaps * 15;
-        negScore += negCenterSwaps * 15;
+        score += (centerSwaps * 15);
+        negScore += (negCenterSwaps * 15);
 
         for (Othello.Coords move : moves) {
             if (move == null) continue;
 
-            if (move.player == player) {
+            if (move.player == maxPlayer) {
                 if (moveIsInCorner(move)) {
                     score += 50;
                 }
@@ -215,17 +273,17 @@ public class MoveEvaluator {
                 }
                 continue;
             }
-            if (moveIsInCorner(move)) {
-                negScore += 50;
-            }
+            if (move.player == minPlayer) {
+                if (moveIsInCorner(move)) {
+                    negScore += 50;
+                }
 
-            if (moveIsInBorders(move)) {
-                negScore += 20;
+                if (moveIsInBorders(move)) {
+                    negScore += 20;
+                }
             }
         }
 
-        if (score + (negScore * -1) > 0)
-            System.out.println("score calc: " + score + (negScore * -1));
         return score + (negScore * -1);
     }
 
