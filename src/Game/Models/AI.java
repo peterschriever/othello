@@ -13,7 +13,7 @@ public class AI implements BotInterface {
     private char maximizingPlayer;
     private MoveEvaluator evaluator;
 
-    private static final int searchDepth = 6;
+    private static final int searchDepth = 5;
 
     public AI(char maximizingPlayer, char minimizingPlayer) {
         this.maximizingPlayer = maximizingPlayer;
@@ -31,6 +31,7 @@ public class AI implements BotInterface {
     }
 
     public Othello.Coords doTurn(Othello gameLogic) {
+        System.out.println("PLAYING AS: "+maximizingPlayer);
         List<Othello.Coords> initMoves = gameLogic.getLegitMoves(maximizingPlayer);
         if (initMoves.size() == 0) {
             System.out.println("WHY IS THIS 0? NO MOVES FOUND");

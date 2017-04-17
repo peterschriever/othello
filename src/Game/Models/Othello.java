@@ -137,7 +137,7 @@ public class Othello implements GameLogicInterface, Cloneable {
                     if (flip == null) {
                         continue;
                     }
-                    this.toBeSwapped.push(flip);
+                    this.toBeSwapped.push(new Coords(flip.x, flip.y, player, switchPlayer(player)));
 
                     // update board with flip
                     board.set(flip, player);
@@ -197,6 +197,10 @@ public class Othello implements GameLogicInterface, Cloneable {
         List<Coords> p2Moves = getLegitMoves('2');
 
         return p1Moves.size() == 0 && p2Moves.size() == 0;
+    }
+
+    public OthelloBoard getOBoard() {
+        return board;
     }
 
     public static class Coords {
