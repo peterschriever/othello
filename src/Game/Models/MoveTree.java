@@ -5,7 +5,7 @@ package Game.Models;
  * Part of the othello project.
  */
 public class MoveTree {
-    private final MoveNode rootNode = new MoveNode(null, 0, null);
+    private final MoveNode rootNode = new MoveNode(null, 0, null, true);
     private Othello gameLogic;
 
     public MoveTree(Othello gameLogic) {
@@ -27,6 +27,7 @@ public class MoveTree {
             if (score > pathScore) {
                 pathScore = score;
                 bestMove = nextNode.coords;
+                System.out.println("Considering pathScore: " + pathScore + ", move:" + bestMove.x + "," + bestMove.y);
             }
         }
 
@@ -37,14 +38,14 @@ public class MoveTree {
     }
 
     private int traverseAndFindScore(MoveNode node, boolean isMaxing) {
-        int pathScore = node.getMoveValue(); // the minimum value of this path, when we don't consider children
+        int pathScore = node.value; // the minimum value of this path, when we don't consider children
         int score;
         for (MoveNode nextNode : node.nextNodes) {
             if (nextNode == null) {
                 continue;
             }
 
-            score = traverseAndFindScore(nextNode, !isMaxing) + node.getMoveValue();
+            score = traverseAndFindScore(nextNode, !isMaxing) + node.value;
 
             // maxi
             if (isMaxing && (score > pathScore)) pathScore = score;
