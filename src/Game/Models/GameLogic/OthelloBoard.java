@@ -1,4 +1,4 @@
-package Game.Models;
+package Game.Models.GameLogic;
 
 import java.util.Arrays;
 

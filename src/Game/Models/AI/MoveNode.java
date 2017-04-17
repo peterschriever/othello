@@ -1,4 +1,6 @@
-package Game.Models;
+package Game.Models.AI;
+
+import Game.Models.GameLogic.Othello;
 
 /**
  * Created by peterzen on 2017-04-15.

@@ -5,8 +5,8 @@ import Framework.Dialogs.ErrorDialog;
 import Framework.GUI.Board;
 import Framework.Networking.Request.MoveRequest;
 import Framework.Networking.Request.Request;
-import Game.Models.AI;
-import Game.Models.Othello;
+import Game.Models.AI.Bot;
+import Game.Models.GameLogic.Othello;
 import Game.StartGame;
 import Game.Views.CustomLabel;
 import javafx.application.Platform;
@@ -28,7 +28,7 @@ import java.util.Map;
  * Part of the othello project.
  */
 public class BoardController extends Board {
-    private AI bot = null; // bot instance is made when required (in getter)
+    private Bot bot = null; // bot instance is made when required (in getter)
     public Othello othello;
     public String startingPlayer;
     private static final int BOARDSIZE = 8;
@@ -50,7 +50,7 @@ public class BoardController extends Board {
         loadGrid();
     }
 
-    public AI getAI() {
+    public Bot getAI() {
         if (bot == null) {
             char maxi;
             char mini;
@@ -62,7 +62,7 @@ public class BoardController extends Board {
                 mini = '2';
             }
 
-            bot = new AI(maxi, mini);
+            bot = new Bot(maxi, mini);
         }
 
         return bot;
@@ -103,7 +103,7 @@ public class BoardController extends Board {
         Thread updateThread = new Thread(moveUpdateTask);
         updateThread.start();
 
-        // HACK: sleep to give the GUI time to update the last move (AI flickers sends moves too fast?)
+        // HACK: sleep to give the GUI time to update the last move (Bot flickers sends moves too fast?)
         try {
             while(updateThread.isAlive()) {
                 Thread.sleep(100);
@@ -245,7 +245,7 @@ public class BoardController extends Board {
 
             // send moveRequest to game server
             int pos = moveCoords.x * BOARDSIZE + moveCoords.y;
-//            System.out.println("AI MOVE GEN: " + moveCoords.x + "," + moveCoords.y + " == " + pos);
+//            System.out.println("Bot MOVE GEN: " + moveCoords.x + "," + moveCoords.y + " == " + pos);
             Request moveRequest = new MoveRequest(StartGame.getConn(), pos);
             moveRequest.execute();
 

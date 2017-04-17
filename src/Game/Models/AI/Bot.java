@@ -1,33 +1,25 @@
-package Game.Models;
+package Game.Models.AI;
 
 import Framework.AI.BotInterface;
+import Game.Models.GameLogic.Othello;
 
 import java.util.List;
 
 /**
- * Created by Ruben on 2017-04-14.
+ * Created by peterzen on 2017-04-17.
  * Part of the othello project.
  */
-// @TODO: update BotInterface in Framework
-public class AI implements BotInterface {
+// @TODO: update framework BotInterface
+public class Bot implements BotInterface {
+
     private char maximizingPlayer;
     private MoveEvaluator evaluator;
 
     private static final int searchDepth = 6;
 
-    public AI(char maximizingPlayer, char minimizingPlayer) {
+    public Bot(char maximizingPlayer, char minimizingPlayer) {
         this.maximizingPlayer = maximizingPlayer;
         this.evaluator = new MoveEvaluator(searchDepth, maximizingPlayer, minimizingPlayer);
-    }
-
-    @Override
-    public char getPlayer() {
-        return maximizingPlayer;
-    }
-
-    @Override
-    public int[] doTurn(char[][] chars) {
-        return new int[0];
     }
 
     public Othello.Coords doTurn(Othello gameLogic) {
@@ -48,5 +40,13 @@ public class AI implements BotInterface {
         return bestMove;
     }
 
+    @Override
+    public char getPlayer() {
+        return 0;
+    }
 
+    @Override
+    public int[] doTurn(char[][] chars) {
+        return new int[0];
+    }
 }

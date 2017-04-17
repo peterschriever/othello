@@ -1,4 +1,4 @@
-package Game.Models;
+package Game.Models.GameLogic;
 
 import Framework.Game.GameLogicInterface;
 
@@ -19,7 +19,7 @@ public class Othello implements GameLogicInterface, Cloneable {
     // swaps needed for gui:
     private Stack<Coords> toBeSwapped;
 
-    // swaps for AI:
+    // swaps for Bot:
     private Stack<Coords[]> undoableAITurns;
 
 
@@ -210,7 +210,7 @@ public class Othello implements GameLogicInterface, Cloneable {
             this.y = y;
         }
 
-        // For AI undos
+        // For Bot undos
         public Coords(int x, int y, char player, char old) {
             this.x = x;
             this.y = y;

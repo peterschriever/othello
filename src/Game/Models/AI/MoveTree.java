@@ -1,4 +1,6 @@
-package Game.Models;
+package Game.Models.AI;
+
+import Game.Models.GameLogic.Othello;
 
 /**
  * Created by peterzen on 2017-04-15.
@@ -56,7 +58,7 @@ public class MoveTree {
     }
 
 
-    public Othello getGameLogicClone() {
+    public Othello getGameLogic() {
         return gameLogic;
     }
 }

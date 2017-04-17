@@ -5,7 +5,7 @@ import Framework.Networking.NetworkEvents;
 import Framework.Networking.Response.*;
 import Game.StartGame;
 import javafx.application.Platform;
-import Game.Models.Othello;
+import Game.Models.GameLogic.Othello;
 
 /**
  * Created by peterzen on 2017-04-12.
@@ -86,7 +86,7 @@ public class NetworkEventsController implements NetworkEvents {
         // update GUI (and enable possibility to move) to reflect turn change
         StartGame.getBaseController().getBoardController().setOurTurn();
 
-        // let the AI generate a move if needed
+        // let the Bot generate a move if needed
         if (StartGame.getBaseController().getControlsController().isBotPlaying()) {
             StartGame.getBaseController().getBoardController().doAITurn();
         }

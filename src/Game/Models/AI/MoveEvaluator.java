@@ -1,4 +1,6 @@
-package Game.Models;
+package Game.Models.AI;
+
+import Game.Models.GameLogic.Othello;
 
 import java.util.List;
 import java.util.Random;
@@ -7,11 +9,6 @@ import java.util.Random;
  * Created by peterzen on 2017-04-15.
  * Part of the othello project.
  */
-// @TODO: save a copy of OthelloBoard with the searchTree, apply the moves(MoveNodes) on this board,
-// @TODO: and evaluate the moveNode values based on the possible swaps and possible stone positions
-// @TODO: do not forget to apply the moves on the original Board when traversing the tree
-// applying maximisation at the odd levels, and minimisation at the even levels
-// stop creating when searchDepth is reached, and traverse to the best move
 public class MoveEvaluator {
     private final char maxPlayer;
     private final char minPlayer;
