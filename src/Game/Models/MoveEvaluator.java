@@ -43,7 +43,7 @@ public class MoveEvaluator {
         Othello.Coords bestMove = DFS_minimaxValueOf(searchTree.getRootNode(), gameLogic);
 
         // traverse and find bestMove
-//        Othello.Coords bestMove = searchTree.traverseFindBestScoringPath(true);
+//        Othello.Coords bestMove = searchTree.traverseFindBestScoringPath(true); // old way @TODO: clean up
         if (bestMove != null) {
             return bestMove;
         } else {
@@ -53,6 +53,8 @@ public class MoveEvaluator {
     }
 
     private Othello.Coords DFS_minimaxValueOf(MoveNode node, Othello gameLogic) {
+        // the first child nodes (of root) are handled here
+
         int score;
         int bestScore = Integer.MIN_VALUE;
         Othello.Coords bestMove = null;
@@ -64,16 +66,40 @@ public class MoveEvaluator {
                 bestScore = score;
             }
         }
-        System.out.println("bestMove chosen: "+bestScore);
+        System.out.println("bestMove chosen: " + bestScore);
 
         return bestMove;
     }
 
     private int DFS_maximumValueOf(MoveNode node, Othello gameLogic) {
+        if (!node.isVisited) {
+            // inherit alpha-beta from parent
+            node.alpha = node.parent.alpha;
+            node.beta = node.parent.beta;
+        }
+
         if (node.isLeaf) {
+            // update value
             evaluateLeafScore(node, gameLogic, minPlayer, maxPlayer);
+
+            // Max node: re-eval alpha value
+            if (node.value > node.alpha) node.alpha = node.value;
+
+            bringUpNodeValue(node);
+
+            node.isVisited = true;
             return node.value;
         }
+        node.isVisited = true;
+
+        // not a leaf node:
+        // on a Max node:
+//        System.out.println("node.value: " + node.value + ", beta:" + node.beta);
+//        if (node.value > node.beta) performBetaCut(node);
+        if (node.alpha > node.beta) performBetaCut(node);
+
+        // bring values up to parents, as long as we are not the rootNode
+        if (node.getDepth() > 0) bringUpNodeValue(node);
 
         int score;
         int bestScore = Integer.MIN_VALUE;
@@ -87,13 +113,35 @@ public class MoveEvaluator {
     }
 
     private int DFS_minimumValueOf(MoveNode node, Othello gameLogic) {
+        if (!node.isVisited) {
+            // inherit alpha-beta from parent
+            node.alpha = node.parent.alpha;
+            node.beta = node.parent.beta;
+        }
+
         if (node.isLeaf) {
             evaluateLeafScore(node, gameLogic, maxPlayer, minPlayer);
+
+            // Min node: re-eval beta value
+            if (node.value < node.beta) node.beta = node.value;
+
+            bringUpNodeValue(node);
+
+            node.isVisited = true;
             return node.value;
         }
+        node.isVisited = true;
+        // not a leaf node:
+        // on a Min node:
+//        if (node.value > node.beta) performBetaCut(node);
+        if (node.alpha > node.beta) performBetaCut(node);
+
+        // bring values up to parents, as long as we are not the rootNode
+        if (node.getDepth() > 0) bringUpNodeValue(node);
 
         int score;
         int bestScore = Integer.MAX_VALUE;
+//        int bestScore = 0;
         for (MoveNode nextNode : node.nextNodes) {
             if (nextNode == null) continue;
             score = DFS_maximumValueOf(nextNode, gameLogic);
@@ -103,13 +151,23 @@ public class MoveEvaluator {
         return bestScore;
     }
 
+    private void bringUpNodeValue(MoveNode node) {
+        // re-eval value for parent
+        if (node.parent.isMaxi && node.value > node.parent.value) node.parent.value = node.value;
+        if (!node.parent.isMaxi && node.value < node.parent.value) node.parent.value = node.value;
+
+        // re-eval alpha-beta for parent
+        if (node.parent.isMaxi && node.value > node.parent.alpha) node.parent.alpha = node.value;
+        if (node.parent.isMaxi && node.value < node.parent.beta) node.parent.beta = node.value;
+    }
+
     // @TODO: check if traversal is in the right order (DFS vs post order vs other?)
     private void evaluateMiniMaxTree(MoveNode node, int currentDepth, Othello gameLogic) {
         char player = node.isMaxi ? maxPlayer : minPlayer;
         char otherPlayer = !node.isMaxi ? maxPlayer : minPlayer;
         node.isVisited = true;
 
-        if (node.isLeaf) {
+        if (node.isLeaf && !node.isVisited) {
 //            inheritFieldsFromParent(node); // @TODO: do we need alpha/beta values in leafNodes?
 
             evaluateLeafScore(node, gameLogic, player, otherPlayer);
@@ -119,8 +177,8 @@ public class MoveEvaluator {
             // this is not a leaf node, we have to decide if we want to look at other children or cut them off
             inheritFieldsFromParent(node);
 
-            if (node.isMaxi) performBetaCutIfNeeded(node);
-            else performAlphaCutIfNeeded(node);
+            if (node.isMaxi) performBetaCut(node);
+            else performBetaCut(node);
             updateParentFields(node);
         }
 
@@ -130,7 +188,6 @@ public class MoveEvaluator {
         currentDepth++;
         for (int i = 0; i < node.nextNodes.length; i++) {
             if (node.nextNodes[i] != null && !node.nextNodes[i].isVisited) {
-//                System.out.println("currentDepth: " + currentDepth + ", branch:" + i);
                 evaluateMiniMaxTree(node.nextNodes[i], currentDepth, gameLogic);
             }
         }
@@ -143,32 +200,22 @@ public class MoveEvaluator {
         if (node.beta == Integer.MAX_VALUE) node.beta = node.parent.beta;
     }
 
-    private void performAlphaCutIfNeeded(MoveNode node) {
-        // Mini: if V <= alpha: alpha cut
-        if (node.value <= node.alpha) {
-            // perform alpha cut; remove all other children (may cut off a sub tree)
-            // @TODO: if we set nodes null here, do they still get called in the post order tree traversal loop?
-            // @TODO: do we need to deepen till searchDepth and null all children from the param node?
-            for (MoveNode nextNode : node.nextNodes) {
-                if (nextNode != null && !nextNode.isVisited) {
-                    for (MoveNode deeperNode : nextNode.nextNodes) {
-                        if (deeperNode != null && !deeperNode.isVisited) deeperNode = null;
-                    }
-                    nextNode = null;
-                }
-            }
-        }
-    }
+//    private void performAlphaCut(MoveNode node) {
+//        // Mini: if V <= alpha: alpha cut
+//        // perform alpha cut; remove all other children (may cut off a sub tree)
+//        for (MoveNode nextNode : node.nextNodes) {
+//            if ()
+//        }
+//    }
 
-    private void performBetaCutIfNeeded(MoveNode node) {
+    private void performBetaCut(MoveNode node) {
         // Maxi: if V >= beta: beta cut
-        if (node.value >= node.beta) {
-            // perform beta cut; remove all other direct children (no need to check)
-            for (MoveNode nextNode : node.nextNodes) {
-                if (nextNode != null && !nextNode.isVisited) {
-                    // @TODO: if we set nodes null here, do they still get called in the post order tree traversal loop?
-                    nextNode = null;
-                }
+        // perform beta cut; remove all other direct children (no need to check)
+        System.out.println("performBetaCut");
+        for (int i = 0; i < node.nextNodes.length; i++) {
+            if (node.nextNodes[i] == null) continue;
+            if (!node.nextNodes[i].isVisited) {
+                node.nextNodes[i] = null;
             }
         }
     }
@@ -180,7 +227,7 @@ public class MoveEvaluator {
             if (node.parent.value > node.value) node.parent.value = node.value;
 
             // question: is beta (+inf) >= v? update beta
-            if (node.parent.beta >= node.value) {
+            if (node.parent.beta > node.value) {
                 node.parent.beta = node.value;
             }
         } else {
@@ -198,13 +245,13 @@ public class MoveEvaluator {
         else node.doTurn(gameLogic, player, otherPlayer, true);
 
         int score;
-        if (!gameLogic.gameEndAndWon(player, otherPlayer)) { // @TODO: optimize; without check: 7 deep, with 6
-            score = simple_evaluateResultingBoard(gameLogic.getOBoard(), player);
-//            if ('2' == maxPlayer) score = score * -1;
-        } else {
-            score = Integer.MAX_VALUE;
-        }
-//        if (score != 0) System.out.println("calc score: " + score);
+        // current method of checking gameEnd is too expensive
+//        if (!gameLogic.gameEndAndWon(player, otherPlayer)) {
+        score = simple_evaluateResultingBoard(gameLogic.getOBoard(), player);
+//        } else {
+//            score = Integer.MAX_VALUE;
+//        }
+
         node.value = score;
 
         // undo all turn changes

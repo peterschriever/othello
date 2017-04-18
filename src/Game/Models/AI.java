@@ -13,7 +13,7 @@ public class AI implements BotInterface {
     private char maximizingPlayer;
     private MoveEvaluator evaluator;
 
-    private static final int searchDepth = 5;
+    private static final int searchDepth = 6;
 
     public AI(char maximizingPlayer, char minimizingPlayer) {
         this.maximizingPlayer = maximizingPlayer;
