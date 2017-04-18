@@ -35,7 +35,7 @@
                         <Insets left="24.0" right="24.0" />
                     </HBox.margin>
                 </Separator>
-                <Button mnemonicParsing="false" fx:id="challengeComputer" prefHeight="56.0" prefWidth="300.0" text="Play against the computer" />
+                <Button disable="true" mnemonicParsing="false" fx:id="challengeComputer" prefHeight="56.0" prefWidth="300.0" text="Play against the computer" />
             </children>
         </HBox>
     </children>
