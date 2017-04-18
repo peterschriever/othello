@@ -200,7 +200,7 @@ public class MoveEvaluator {
         int score;
         if (!gameLogic.gameEndAndWon(player, otherPlayer)) { // @TODO: optimize; without check: 7 deep, with 6
             score = simple_evaluateResultingBoard(gameLogic.getOBoard(), player);
-            if ('2' == maxPlayer) score = score * -1;
+//            if ('2' == maxPlayer) score = score * -1;
         } else {
             score = Integer.MAX_VALUE;
         }
